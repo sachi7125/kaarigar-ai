@@ -1,0 +1,312 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1720" viewBox="0 0 1500 1720" font-family="Noto Sans, Helvetica, Arial, Noto Sans Devanagari, Noto Sans Bengali, Noto Sans Tamil, DejaVu Sans, sans-serif">
+<rect width="1500" height="1720" fill="#ffffff"/>
+
+<text x="60" y="58" font-size="27" font-weight="bold" fill="#1a1a1a">KaarigarAI — Screen Wireframes</text>
+<text x="60" y="84" font-size="14" fill="#6b6b6b">Six screens · low-fidelity, deliberately · the whole product claim is an interface for someone who cannot read, so it has to be drawn</text>
+<rect x="60" y="98" width="200" height="3" fill="#8a5a2b"/>
+<text x="1020" y="58" font-size="12.5" fill="#8a8a8a">Grey bars = text the artisan is NOT expected to read.</text>
+<text x="1020" y="76" font-size="12.5" fill="#8a8a8a">Every grey bar has a speaker button beside it.</text>
+<text x="1020" y="94" font-size="12.5" fill="#8a8a8a">Minimum touch target drawn at 64 px.</text>
+
+<defs>
+  <symbol id="spk" viewBox="0 0 24 24">
+    <path d="M4 9h4l5-4v14l-5-4H4z" fill="#8a5a2b"/>
+    <path d="M16 8a5 5 0 0 1 0 8" fill="none" stroke="#8a5a2b" stroke-width="2" stroke-linecap="round"/>
+    <path d="M18.5 5a9 9 0 0 1 0 14" fill="none" stroke="#8a5a2b" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  </symbol>
+  <symbol id="pot" viewBox="0 0 100 100">
+    <path d="M32 30 h36 l-4 8 c12 6 18 18 18 28 c0 16-15 26-32 26 s-32-10-32-26 c0-10 6-22 18-28 z" fill="#d9d0c2"/>
+    <path d="M22 62 q28 10 56 0" fill="none" stroke="#bdb2a1" stroke-width="3"/>
+  </symbol>
+  <symbol id="mic2" viewBox="0 0 24 24">
+    <rect x="9" y="3" width="6" height="11" rx="3" fill="#a3492f"/>
+    <path d="M6 12a6 6 0 0 0 12 0" fill="none" stroke="#a3492f" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M12 18v3" stroke="#a3492f" stroke-width="2.4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="mic" viewBox="0 0 24 24">
+    <rect x="9" y="3" width="6" height="11" rx="3" fill="#8a5a2b"/>
+    <path d="M6 12a6 6 0 0 0 12 0" fill="none" stroke="#8a5a2b" stroke-width="2" stroke-linecap="round"/>
+    <path d="M12 18v3" stroke="#8a5a2b" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+</defs>
+
+<!-- ============ SCREEN 1 ============ -->
+<g transform="translate(60,140)">
+  <rect x="0" y="0" width="340" height="600" rx="26" fill="#fbfaf8" stroke="#cfc7ba" stroke-width="2"/>
+  <text x="16" y="-12" font-size="14" font-weight="bold" fill="#8a5a2b">1 · FIRST RUN — CHOOSE A LANGUAGE</text>
+
+  <circle cx="170" cy="62" r="30" fill="#fdf6e9" stroke="#e0c893"/>
+  <use href="#spk" x="155" y="47" width="30" height="30"/>
+  <rect x="90" y="106" width="160" height="9" rx="4.5" fill="#ddd6cb"/>
+
+  <g>
+    <rect x="26" y="140" width="134" height="134" rx="14" fill="#fff" stroke="#c4baa9" stroke-width="2"/>
+    <text x="93" y="207" font-size="42" text-anchor="middle" fill="#1a1a1a"
+      font-family="Noto Sans Devanagari, Noto Sans Bengali, Noto Sans Tamil, DejaVu Sans, sans-serif">हिं</text>
+    <circle cx="136" cy="248" r="15" fill="#fdf6e9" stroke="#e0c893"/>
+    <use href="#spk" x="128" y="240" width="16" height="16"/>
+
+    <rect x="180" y="140" width="134" height="134" rx="14" fill="#fff" stroke="#c4baa9" stroke-width="2"/>
+    <text x="247" y="207" font-size="42" text-anchor="middle" fill="#1a1a1a"
+      font-family="Noto Sans Bengali">বাং</text>
+    <circle cx="290" cy="248" r="15" fill="#fdf6e9" stroke="#e0c893"/>
+    <use href="#spk" x="282" y="240" width="16" height="16"/>
+
+    <rect x="26" y="292" width="134" height="134" rx="14" fill="#fff" stroke="#c4baa9" stroke-width="2"/>
+    <text x="93" y="359" font-size="42" text-anchor="middle" fill="#1a1a1a"
+      font-family="Noto Sans Tamil">தமி</text>
+    <circle cx="136" cy="400" r="15" fill="#fdf6e9" stroke="#e0c893"/>
+    <use href="#spk" x="128" y="392" width="16" height="16"/>
+
+    <rect x="180" y="292" width="134" height="134" rx="14" fill="#fff" stroke="#c4baa9" stroke-width="2"/>
+    <text x="247" y="359" font-size="42" text-anchor="middle" fill="#1a1a1a"
+      font-family="Noto Sans Devanagari, Noto Sans Bengali, Noto Sans Tamil, DejaVu Sans, sans-serif">मरा</text>
+    <circle cx="290" cy="400" r="15" fill="#fdf6e9" stroke="#e0c893"/>
+    <use href="#spk" x="282" y="392" width="16" height="16"/>
+  </g>
+
+  <rect x="17" y="131" width="152" height="152" rx="18" fill="none" stroke="#8a5a2b" stroke-width="2.5" stroke-dasharray="6 5"/>
+  <path d="M150 268 l26 26" stroke="#8a5a2b" stroke-width="2.5"/>
+  <circle cx="180" cy="298" r="8" fill="#8a5a2b"/>
+
+  <rect x="26" y="466" width="288" height="72" rx="12" fill="#fff" stroke="#c4baa9"/>
+  <text x="46" y="500" font-size="26" font-family="Noto Sans Devanagari, Noto Sans Bengali, Noto Sans Tamil, DejaVu Sans, sans-serif">१२३</text>
+  <rect x="110" y="490" width="120" height="9" rx="4.5" fill="#ddd6cb"/>
+  <rect x="110" y="508" width="80" height="9" rx="4.5" fill="#e8e2d8"/>
+  <circle cx="288" cy="502" r="16" fill="#fdf6e9" stroke="#e0c893"/>
+  <use href="#spk" x="280" y="494" width="17" height="17"/>
+  <text x="26" y="566" font-size="11" fill="#8a8a8a">Numeric keypad next — digits, no letters</text>
+</g>
+<text x="60" y="778" font-size="13" font-weight="bold" fill="#1a1a1a">Each tile speaks its own name when touched.</text>
+<text x="60" y="798" font-size="12.5" fill="#4a4a4a">No language list is read. Nothing on this screen must be</text>
+<text x="60" y="816" font-size="12.5" fill="#4a4a4a">understood in writing to get past it — the script glyph is</text>
+<text x="60" y="834" font-size="12.5" fill="#4a4a4a">recognition, not reading. Language stays changeable here later.</text>
+
+<!-- ============ SCREEN 2 ============ -->
+<g transform="translate(540,140)">
+  <rect x="0" y="0" width="340" height="600" rx="26" fill="#fbfaf8" stroke="#cfc7ba" stroke-width="2"/>
+  <text x="16" y="-12" font-size="14" font-weight="bold" fill="#8a5a2b">2 · CAPTURE THE CRAFT</text>
+
+  <rect x="24" y="40" width="292" height="330" rx="10" fill="#f1ede6" stroke="#c4baa9"/>
+  <use href="#pot" x="120" y="130" width="100" height="150"/>
+  <g stroke="#8a5a2b" stroke-width="3" fill="none">
+    <path d="M48 66 v-16 h16"/><path d="M292 66 v-16 h-16"/>
+    <path d="M48 344 v16 h16"/><path d="M292 344 v16 h-16"/>
+  </g>
+  <rect x="108" y="386" width="124" height="10" rx="5" fill="#ddd6cb"/>
+
+  <circle cx="170" cy="470" r="46" fill="#fff" stroke="#8a5a2b" stroke-width="4"/>
+  <circle cx="170" cy="470" r="33" fill="#8a5a2b"/>
+  <rect x="42" y="446" width="48" height="48" rx="9" fill="#fff" stroke="#c4baa9"/>
+  <rect x="52" y="458" width="28" height="22" rx="3" fill="#ddd6cb"/>
+  <circle cx="274" cy="470" r="24" fill="#fdf6e9" stroke="#e0c893"/>
+  <use href="#spk" x="264" y="460" width="20" height="20"/>
+
+  <rect x="24" y="536" width="292" height="44" rx="8" fill="#e3efe4" stroke="#a9c9ae"/>
+  <circle cx="48" cy="558" r="10" fill="#23532b"/>
+  <rect x="68" y="553" width="150" height="9" rx="4.5" fill="#9cbba2"/>
+  <text x="240" y="563" font-size="11.5" fill="#23532b">works offline</text>
+</g>
+<text x="540" y="778" font-size="13" font-weight="bold" fill="#1a1a1a">One button that cannot be mistaken for anything else.</text>
+<text x="540" y="798" font-size="12.5" fill="#4a4a4a">Framing brackets replace the instruction "centre the product".</text>
+<text x="540" y="816" font-size="12.5" fill="#4a4a4a">Retake prompts are spoken, not written. The green strip means</text>
+<text x="540" y="834" font-size="12.5" fill="#4a4a4a">saved-and-queued — capture never depends on a network.</text>
+
+<!-- ============ SCREEN 3 ============ -->
+<g transform="translate(1020,140)">
+  <rect x="0" y="0" width="340" height="600" rx="26" fill="#fbfaf8" stroke="#cfc7ba" stroke-width="2"/>
+  <text x="16" y="-12" font-size="14" font-weight="bold" fill="#8a5a2b">3 · SPEAK, THEN HEAR IT BACK</text>
+
+  <circle cx="170" cy="92" r="48" fill="#fdf6e9" stroke="#e0c893" stroke-width="2"/>
+  <use href="#mic" x="146" y="68" width="48" height="48"/>
+  <g fill="#c9a35f">
+    <rect x="66" y="164" width="7" height="18" rx="3.5"/><rect x="82" y="156" width="7" height="34" rx="3.5"/>
+    <rect x="98" y="148" width="7" height="50" rx="3.5"/><rect x="114" y="158" width="7" height="30" rx="3.5"/>
+    <rect x="130" y="142" width="7" height="62" rx="3.5"/><rect x="146" y="152" width="7" height="42" rx="3.5"/>
+    <rect x="162" y="138" width="7" height="70" rx="3.5"/><rect x="178" y="150" width="7" height="46" rx="3.5"/>
+    <rect x="194" y="160" width="7" height="26" rx="3.5"/><rect x="210" y="146" width="7" height="54" rx="3.5"/>
+    <rect x="226" y="156" width="7" height="34" rx="3.5"/><rect x="242" y="164" width="7" height="18" rx="3.5"/>
+    <rect x="258" y="158" width="7" height="30" rx="3.5"/>
+  </g>
+  <text x="170" y="232" font-size="22" text-anchor="middle" font-weight="bold" fill="#1a1a1a">0:12</text>
+
+  <rect x="24" y="252" width="292" height="150" rx="10" fill="#fff" stroke="#c4baa9"/>
+  <circle cx="62" cy="290" r="24" fill="#8a5a2b"/>
+  <path d="M55 281 l16 9 -16 9 z" fill="#fff"/>
+  <rect x="98" y="276" width="196" height="9" rx="4.5" fill="#ddd6cb"/>
+  <rect x="98" y="294" width="160" height="9" rx="4.5" fill="#e8e2d8"/>
+  <rect x="40" y="326" width="254" height="9" rx="4.5" fill="#e8e2d8"/>
+  <rect x="40" y="344" width="230" height="9" rx="4.5" fill="#e8e2d8"/>
+  <rect x="40" y="362" width="180" height="9" rx="4.5" fill="#e8e2d8"/>
+  <text x="40" y="392" font-size="10" fill="#8a8a8a">English + Hindi · read aloud, never silently published</text>
+
+  <rect x="24" y="424" width="140" height="86" rx="12" fill="#e3efe4" stroke="#7fa886" stroke-width="2"/>
+  <path d="M70 468 l16 18 32 -38" fill="none" stroke="#23532b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="176" y="424" width="140" height="86" rx="12" fill="#fdf1ec" stroke="#d3a08f" stroke-width="2"/>
+  <use href="#mic2" x="222" y="443" width="48" height="48"/>
+
+  <rect x="24" y="530" width="292" height="46" rx="8" fill="#f4f1ec" stroke="#d8d0c4"/>
+  <text x="40" y="559" font-size="11" fill="#4a4a4a">Noisy recording: it asks again, never guesses.</text>
+</g>
+<text x="1020" y="778" font-size="13" font-weight="bold" fill="#1a1a1a">Confirmation is the whole design, in one screen.</text>
+<text x="1020" y="798" font-size="12.5" fill="#4a4a4a">The listing text exists but is never required reading — she</text>
+<text x="1020" y="816" font-size="12.5" fill="#4a4a4a">presses play and hears it. Two outcomes only: it's right, or</text>
+<text x="1020" y="834" font-size="12.5" fill="#4a4a4a">say it again. No editing, no keyboard, nothing to type.</text>
+
+<!-- ============ SCREEN 4 ============ -->
+<g transform="translate(60,900)">
+  <rect x="0" y="0" width="340" height="600" rx="26" fill="#fbfaf8" stroke="#cfc7ba" stroke-width="2"/>
+  <text x="16" y="-12" font-size="14" font-weight="bold" fill="#8a5a2b">4 · WHAT IT IS WORTH, AND WHY</text>
+
+  <text x="170" y="86" font-size="50" font-weight="bold" text-anchor="middle" fill="#1a1a1a">₹520</text>
+  <circle cx="292" cy="70" r="19" fill="#fdf6e9" stroke="#e0c893"/>
+  <use href="#spk" x="282" y="60" width="20" height="20"/>
+
+  <rect x="30" y="112" width="280" height="20" rx="10" fill="#ece7de"/>
+  <rect x="92" y="112" width="152" height="20" rx="10" fill="#e0c893"/>
+  <rect x="164" y="104" width="5" height="36" rx="2.5" fill="#1a1a1a"/>
+  <text x="30" y="158" font-size="14" fill="#6b6b6b">₹450</text>
+  <text x="310" y="158" font-size="14" text-anchor="end" fill="#6b6b6b">₹650</text>
+
+  <g>
+    <circle cx="52" cy="204" r="18" fill="#f1ede6" stroke="#c4baa9"/>
+    <rect x="44" y="197" width="16" height="14" rx="3" fill="#b9ac95"/>
+    <rect x="84" y="194" width="150" height="20" rx="10" fill="#c9a35f"/>
+    <text x="248" y="209" font-size="13" fill="#6b6b6b">material</text>
+
+    <circle cx="52" cy="256" r="18" fill="#f1ede6" stroke="#c4baa9"/>
+    <path d="M45 262 l7 -12 7 12 z" fill="#b9ac95"/>
+    <rect x="84" y="246" width="96" height="20" rx="10" fill="#d8bd88"/>
+    <text x="248" y="261" font-size="13" fill="#6b6b6b">demand</text>
+
+    <circle cx="52" cy="308" r="18" fill="#f1ede6" stroke="#c4baa9"/>
+    <path d="M52 300 a6 6 0 0 1 6 6 c0 5 -6 10 -6 10 s-6 -5 -6 -10 a6 6 0 0 1 6 -6z" fill="#b9ac95"/>
+    <rect x="84" y="298" width="58" height="20" rx="10" fill="#e6d3ac"/>
+    <text x="248" y="313" font-size="13" fill="#6b6b6b">region</text>
+  </g>
+  <text x="30" y="356" font-size="10" fill="#8a8a8a">Bar length = how much each raised the price. Tap to hear.</text>
+
+  <rect x="30" y="378" width="280" height="82" rx="10" fill="#f4f1ec" stroke="#d8d0c4"/>
+  <circle cx="62" cy="418" r="20" fill="#fff" stroke="#c4baa9"/>
+  <rect x="55" y="414" width="14" height="11" rx="2" fill="#7a2b22"/>
+  <path d="M57 414 v-4 a5 5 0 0 1 10 0 v4" fill="none" stroke="#7a2b22" stroke-width="2"/>
+  <text x="96" y="410" font-size="17" font-weight="bold" fill="#7a2b22">₹380 floor</text>
+  <text x="96" y="432" font-size="11.5" fill="#4a4a4a">material + labour. Below this you</text>
+  <text x="96" y="448" font-size="11.5" fill="#4a4a4a">are warned — but not blocked.</text>
+
+  <rect x="30" y="484" width="280" height="76" rx="12" fill="#e3efe4" stroke="#7fa886" stroke-width="2"/>
+  <path d="M88 522 l16 18 32 -38" fill="none" stroke="#23532b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="222" cy="522" r="19" fill="#fff" stroke="#a9c9ae"/>
+  <use href="#spk" x="212" y="512" width="20" height="20"/>
+</g>
+<text x="60" y="1538" font-size="13" font-weight="bold" fill="#1a1a1a">SHAP as three bars, not a table.</text>
+<text x="60" y="1558" font-size="12.5" fill="#4a4a4a">A band, never a single false-precision number. The floor is</text>
+<text x="60" y="1576" font-size="12.5" fill="#4a4a4a">visible and explained in the two words that matter — material</text>
+<text x="60" y="1594" font-size="12.5" fill="#4a4a4a">and labour — and it warns without seizing her decision.</text>
+
+<!-- ============ SCREEN 5 ============ -->
+<g transform="translate(540,900)">
+  <rect x="0" y="0" width="340" height="600" rx="26" fill="#fbfaf8" stroke="#cfc7ba" stroke-width="2"/>
+  <text x="16" y="-12" font-size="14" font-weight="bold" fill="#8a5a2b">5 · SOMEBODY WANTS TO BUY IT</text>
+
+  <circle cx="52" cy="52" r="20" fill="#8a5a2b"/>
+  <text x="52" y="59" font-size="19" font-weight="bold" text-anchor="middle" fill="#fff">2</text>
+  <rect x="88" y="47" width="120" height="10" rx="5" fill="#ddd6cb"/>
+  <circle cx="292" cy="52" r="19" fill="#fdf6e9" stroke="#e0c893"/>
+  <use href="#spk" x="282" y="42" width="20" height="20"/>
+
+  <rect x="24" y="92" width="292" height="196" rx="12" fill="#fff" stroke="#c4baa9" stroke-width="2"/>
+  <circle cx="62" cy="134" r="22" fill="#eaf1f5" stroke="#9fc0d0"/>
+  <circle cx="62" cy="127" r="7" fill="#9fb8c6"/>
+  <path d="M50 145 a12 10 0 0 1 24 0z" fill="#9fb8c6"/>
+  <text x="102" y="146" font-size="42" font-weight="bold" fill="#1a1a1a">₹560</text>
+  <circle cx="286" cy="130" r="18" fill="#fdf6e9" stroke="#e0c893"/>
+  <use href="#spk" x="277" y="121" width="19" height="19"/>
+
+  <rect x="40" y="178" width="120" height="46" rx="8" fill="#f4f1ec"/>
+  <text x="100" y="209" font-size="24" font-weight="bold" text-anchor="middle" fill="#1a1a1a">× 12</text>
+  <rect x="176" y="178" width="124" height="46" rx="8" fill="#f4f1ec"/>
+  <rect x="192" y="188" width="26" height="26" rx="4" fill="none" stroke="#8a8a8a" stroke-width="2"/>
+  <rect x="192" y="188" width="26" height="8" rx="4" fill="#8a8a8a"/>
+  <text x="266" y="209" font-size="19" text-anchor="middle" fill="#1a1a1a">5 Sep</text>
+  <rect x="40" y="238" width="180" height="9" rx="4.5" fill="#e8e2d8"/>
+  <text x="40" y="272" font-size="10" fill="#8a8a8a">Fixed fields — nothing to translate to act on it</text>
+
+  <rect x="24" y="308" width="140" height="96" rx="12" fill="#e3efe4" stroke="#7fa886" stroke-width="2"/>
+  <path d="M68 356 l17 19 34 -40" fill="none" stroke="#23532b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="176" y="308" width="140" height="96" rx="12" fill="#f2f0ec" stroke="#c4baa9" stroke-width="2"/>
+  <path d="M222 334 l48 44 M270 334 l-48 44" stroke="#8a8a8a" stroke-width="8" stroke-linecap="round"/>
+
+  <rect x="24" y="424" width="292" height="62" rx="10" fill="#fff" stroke="#ddd6cb"/>
+  <text x="44" y="462" font-size="26" font-weight="bold" fill="#8a8a8a">₹480</text>
+  <rect x="130" y="450" width="100" height="9" rx="4.5" fill="#ece7de"/>
+  <text x="300" y="462" font-size="12" text-anchor="end" fill="#8a8a8a">waiting</text>
+
+  <rect x="24" y="502" width="292" height="58" rx="10" fill="#f4f1ec" stroke="#d8d0c4"/>
+  <circle cx="52" cy="531" r="15" fill="#fff" stroke="#c4baa9"/>
+  <path d="M52 523 l7 4 v6 c0 5 -4 8 -7 9 c-3 -1 -7 -4 -7 -9 v-6z" fill="#7a2b22"/>
+  <text x="80" y="527" font-size="11.5" fill="#4a4a4a">3 offers auto-declined — below your</text>
+  <text x="80" y="545" font-size="11.5" fill="#4a4a4a">price. You were not shown them.</text>
+</g>
+<text x="540" y="1538" font-size="13" font-weight="bold" fill="#1a1a1a">Two buttons. A number she can read. Nothing else.</text>
+<text x="540" y="1558" font-size="12.5" fill="#4a4a4a">Offers carry fixed fields — price, quantity, date — so no</text>
+<text x="540" y="1576" font-size="12.5" fill="#4a4a4a">translation is needed to act. The shield line is the lowball</text>
+<text x="540" y="1594" font-size="12.5" fill="#4a4a4a">protection made visible: she sees that it worked, not the abuse.</text>
+
+<!-- ============ SCREEN 6 ============ -->
+<g transform="translate(1020,900)">
+  <rect x="0" y="0" width="340" height="600" rx="12" fill="#fbfaf8" stroke="#cfc7ba" stroke-width="2"/>
+  <text x="16" y="-12" font-size="14" font-weight="bold" fill="#1f4e63">6 · WHAT THE BUYER SEES (WEB)</text>
+
+  <rect x="2" y="2" width="336" height="40" rx="10" fill="#eef0f2"/>
+  <circle cx="26" cy="22" r="5" fill="#c9c4bc"/><circle cx="44" cy="22" r="5" fill="#c9c4bc"/><circle cx="62" cy="22" r="5" fill="#c9c4bc"/>
+  <rect x="80" y="10" width="238" height="24" rx="12" fill="#fff" stroke="#dcdcd8"/>
+  <text x="94" y="27" font-size="11" fill="#6b6b6b">kaarigar.in/l/7f3a91</text>
+
+  <rect x="14" y="56" width="312" height="152" rx="8" fill="#f1ede6" stroke="#dcd6ca"/>
+  <use href="#pot" x="120" y="76" width="112" height="120"/>
+  <rect x="286" y="66" width="30" height="30" rx="6" fill="#fff" stroke="#c4baa9"/>
+  <rect x="292" y="72" width="8" height="8" fill="#8a5a2b"/><rect x="304" y="72" width="6" height="6" fill="#8a5a2b"/>
+  <rect x="292" y="84" width="6" height="6" fill="#8a5a2b"/><rect x="302" y="82" width="8" height="8" fill="#8a5a2b"/>
+
+  <text x="14" y="238" font-size="17" font-weight="bold" fill="#1a1a1a">Blue pottery vase · Jaipur</text>
+  <text x="14" y="260" font-size="14" fill="#4a4a4a" font-family="Noto Sans Devanagari, Noto Sans Bengali, Noto Sans Tamil, DejaVu Sans, sans-serif">नीला मटका, हस्तनिर्मित</text>
+  <text x="14" y="292" font-size="26" font-weight="bold" fill="#1a1a1a">₹520</text>
+  <text x="106" y="292" font-size="13" fill="#6b6b6b">band ₹450–₹650</text>
+  <rect x="212" y="272" width="114" height="26" rx="13" fill="#e3efe4"/>
+  <text x="269" y="290" font-size="12" text-anchor="middle" fill="#23532b">verified artisan</text>
+
+  <rect x="14" y="312" width="312" height="76" rx="10" fill="#fdf6e9" stroke="#e0c893"/>
+  <circle cx="52" cy="350" r="24" fill="#eae0cd" stroke="#d6c39a"/>
+  <circle cx="52" cy="343" r="8" fill="#c9b48c"/>
+  <path d="M38 362 a14 12 0 0 1 28 0z" fill="#c9b48c"/>
+  <circle cx="106" cy="350" r="17" fill="#8a5a2b"/>
+  <path d="M100 342 l13 8 -13 8z" fill="#fff"/>
+  <g fill="#d8bd88">
+    <rect x="136" y="344" width="5" height="12" rx="2.5"/><rect x="146" y="338" width="5" height="24" rx="2.5"/>
+    <rect x="156" y="332" width="5" height="36" rx="2.5"/><rect x="166" y="342" width="5" height="16" rx="2.5"/>
+    <rect x="176" y="336" width="5" height="28" rx="2.5"/><rect x="186" y="346" width="5" height="8" rx="2.5"/>
+    <rect x="196" y="340" width="5" height="20" rx="2.5"/><rect x="206" y="334" width="5" height="32" rx="2.5"/>
+    <rect x="216" y="344" width="5" height="12" rx="2.5"/>
+  </g>
+  <text x="238" y="354" font-size="11.5" fill="#6b4a10">maker's story</text>
+
+  <rect x="14" y="404" width="312" height="60" rx="10" fill="#8a5a2b"/>
+  <text x="170" y="441" font-size="19" font-weight="bold" text-anchor="middle" fill="#fff">Make an offer</text>
+
+  <rect x="14" y="478" width="312" height="66" rx="10" fill="#fff" stroke="#dcd6ca"/>
+  <text x="28" y="502" font-size="12" fill="#4a4a4a">Offers below the asking price are declined</text>
+  <text x="28" y="520" font-size="12" fill="#4a4a4a">automatically. Contact details are exchanged</text>
+  <text x="28" y="538" font-size="12" fill="#4a4a4a">only after the artisan accepts.</text>
+
+  <text x="14" y="568" font-size="11" fill="#8a8a8a">Permanent URL — the printed stall QR resolves here</text>
+</g>
+<text x="1020" y="1538" font-size="13" font-weight="bold" fill="#1a1a1a">The only screen where reading is assumed.</text>
+<text x="1020" y="1558" font-size="12.5" fill="#4a4a4a">Buyers are boutique owners, exporters and procurement staff —</text>
+<text x="1020" y="1576" font-size="12.5" fill="#4a4a4a">so this side is ordinary and plain on purpose. Two sides in one</text>
+<text x="1020" y="1594" font-size="12.5" fill="#4a4a4a">demo is what most submissions never show.</text>
+
+<rect x="60" y="1626" width="1380" height="1" fill="#e2dbd0"/>
+<text x="60" y="1656" font-size="12.5" fill="#6b6b6b">Wireframes, not visual design: layout, hierarchy and touch targets are the decisions being made here — colour, type and iconography are not final.</text>
+<text x="60" y="1678" font-size="12.5" fill="#6b6b6b">Every screen obeys three rules: nothing essential exists only as text · every text block has a speaker beside it · no screen offers more than two real choices.</text>
+</svg>
