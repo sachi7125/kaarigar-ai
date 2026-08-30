@@ -1,0 +1,56 @@
+# KaarigarAI — configuration. Every tunable parameter in one place.
+# Sourced facts live in data/reference/*. Secrets live in .env (never here).
+
+languages:
+  input: [hi, bn, ta, mr]     # tested end to end
+  output: [en, hi]            # listing is bilingual
+  demo_lead: hi
+
+models:
+  transcribe:
+    server: whisper-small       # default when online
+    on_device: whisper-tiny-q   # ~70 MB, fetched on first sync, offline fallback
+    min_confidence: 0.55        # below -> ask for a re-record
+  translate: indictrans2-200M-distilled
+  describe:  gemini-free
+  tts:       offline-voice       # shared: read-back, onboarding, alerts, nudges
+
+image:
+  bg_removal: rembg-u2net
+  target_ratios: [1.0, 1.33]     # e-commerce crops
+  failure_contrast_min: 0.15     # below -> keep original, request retake
+  texture_closeup: true
+  # extras (build if time): blur_shake_capture, synthetic_shadow, perspective_deskew, angle_coach
+
+pricing:
+  floor_wage_per_hour: 60        # INR, conservative; for the labour floor
+  band_halfwidth_frac: 0.15      # band = point ± 15%
+  seasonal_multiplier_cap: 0.25  # |multiplier - 1| never exceeds this
+  material_rate_table: data/reference/material_rates.csv   # dated + sourced
+  reference_set: data/reference/pricing_reference.csv
+  comparables_shown: 3           # evidence strip before the model number
+  # material comes from voice, NOT from the photo (D2)
+
+offers:
+  asking_price_tolerance_frac: 0.05   # below asking - 5% -> auto-decline
+  expiry_hours: 48
+  rate_limit_per_phone_per_hour: 5    # anti lowball-flooding
+
+storefront:
+  follow_digest: weekly               # email only, batched, one-click unsubscribe
+  returning_buyer_flag: true
+
+listings:
+  id_scheme: short_base32             # FROZEN once a stall QR is printed (watchlist)
+  url_base: https://kaarigar.in       # permanent; not a tunnel (O1)
+
+demo:
+  precache_responses: true            # pre-cache Gemini/TTS for demo items (Day 7)
+  offline_rehearsal: true
+  live_routing_api: demo_only         # cached-matrix fallback if it fails
+
+paths:
+  reference_dir: data/reference/
+  processed_dir: data/processed/
+  assets_dir: assets/generated/
+  results_dir: results/

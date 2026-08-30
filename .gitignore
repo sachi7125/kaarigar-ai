@@ -1,0 +1,34 @@
+# secrets
+.env
+*.key
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# ml artifacts (commit run CSVs, not large binaries)
+ml/models/*.json
+ml/models/*.pkl
+ml/models/*.ubj
+!ml/models/.gitkeep
+
+# data (keep reference small + committed; ignore bulky raw)
+data/raw/*
+!data/raw/.gitkeep
+
+# generated assets
+assets/generated/*
+!assets/generated/.gitkeep
+
+# flutter
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins*
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
