@@ -30,6 +30,8 @@ pandas>=2.2
 qrcode>=7.4
 openpyxl>=3.1          # export bundle spreadsheets
 
+streamlit>=1.35        # local playground / Day 6 demo
+
 # --- dev ---
 pytest>=8.0
 httpx>=0.27           # test client

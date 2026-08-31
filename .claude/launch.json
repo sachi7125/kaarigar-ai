@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kaarigar-playground",
+      "runtimeExecutable": ".venv/bin/streamlit",
+      "runtimeArgs": ["run", "scripts/playground.py", "--server.headless=true", "--server.port=8520"],
+      "port": 8520
+    }
+  ]
+}
