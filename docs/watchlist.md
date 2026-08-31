@@ -21,8 +21,14 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
 
 - [ ] **TTS is a hard dependency.** Read-back, onboarding, alerts and nudges all need it. If the
       shared voice slips, those slip too — build it Day 1, not later.
-- [ ] **Failure-aware enhancement must actually fire.** A pale product on a pale wall should keep
-      the original and request a retake, not publish a damaged cut-out.
+- [x] **Failure-aware enhancement must actually fire.** Implemented as **mask sanity**
+      (coverage in 0.02–0.98 AND largest connected blob ≥ 0.55 of subject pixels), NOT internal
+      subject contrast — a flat-coloured pot/sari is legitimately low-contrast and must NOT be
+      rejected. `[!]`-watch on real photos: confirm a genuine pale-on-pale case still trips it.
+- [ ] **White balance is scene-based (Shades-of-Gray, gains clamped 0.6–1.6).** Verify on real
+      warm-lit photos that it corrects the cast without over-blueing; the clamp is the safety net.
+- [ ] **rembg model is a ~176 MB download** (`~/.rembg/u2net.onnx`) on first use. For the demo/
+      device path, pre-fetch it (ties into the Day-7 pre-cache + on-device model plan).
 
 ## Day 3 — offline queue
 

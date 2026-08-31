@@ -18,7 +18,7 @@ models:
 image:
   bg_removal: rembg-u2net
   target_ratios: [1.0, 1.33]     # e-commerce crops
-  failure_contrast_min: 0.15     # below -> keep original, request retake
+  min_subject_component_frac: 0.55  # smaller largest-blob -> fragmented cut-out -> retake
   texture_closeup: true
   # extras (build if time): blur_shake_capture, synthetic_shadow, perspective_deskew, angle_coach
 

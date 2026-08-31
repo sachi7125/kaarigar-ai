@@ -10,11 +10,14 @@ requests>=2.31
 
 # --- AI pipelines ---
 rembg>=2.0             # U2-Net background removal
+onnxruntime>=1.17      # rembg inference backend
 opencv-python>=4.9
 pillow>=10.3
 faster-whisper>=1.0   # whisper.cpp-style inference (transcription)
 google-generativeai>=0.7   # Gemini free tier (description)
 # indictrans2 is installed from source per its repo; pin the checkpoint in models/
+
+pyttsx3>=2.90          # offline TTS (server-side); flutter_tts on device
 
 # --- pricing ---
 xgboost>=2.0

@@ -11,6 +11,8 @@ Add a row when a real choice is made. `D#` ids are stable; reference them in com
 | D4 | **Listings carry stock** (unique vs batch + remaining count); reserve-on-accept is the quantity-one case. | An exporter wants 200 diyas, not one; most output is a run, not a single object. | 30 Aug |
 | D5 | **Per-artisan storefront** as the year-round channel; the stall QR points at it, not a single listing. | Cheap (aggregation over listing pages) and the largest single change to what a buyer sees; turns a one-day fair visitor into a returning contact. | 30 Aug |
 | D6 | **Report-an-issue logs only** — no adjudication, refund, or delist. | Full dispute resolution needs the settlement machinery kept out of scope; a logged, two-sided record is the honest prototype version. | 30 Aug |
+| D7 | **Failure-aware image check = mask sanity, not subject contrast.** Retake when coverage is degenerate or the cut-out is fragmented (largest blob < 0.55). | Gating on the subject's internal contrast wrongly rejected legitimately flat-coloured products (a plain pot, a solid dupatta). The real failure is a bad *cut-out*, which shows up in the mask. | 30 Aug (Day 1) |
+| D8 | **White balance is scene-based Shades-of-Gray with clamped gains**, not gray-world over the subject. | Gray-world over the subject neutralises a strongly single-coloured product — a blue pot came out grey. Estimating the illuminant from the whole frame corrects the cast while keeping the product's colour. | 30 Aug (Day 1) |
 
 ## Open decisions
 

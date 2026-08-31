@@ -32,3 +32,6 @@ mobile/.flutter-plugins*
 .DS_Store
 .idea/
 .vscode/
+
+# smoke / run outputs
+results/

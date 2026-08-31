@@ -14,12 +14,14 @@ Roadmap: [`planning/KaarigarAI_9Day_Roadmap.md`](planning/KaarigarAI_9Day_Roadma
 - [x] `config/config.yaml`, `.gitignore`, `backend/requirements.txt`, `mobile/pubspec.yaml`
 - [ ] Git first commit of the scaffold *(user setting up git)*
 
-## Day 1 — Image pipeline + shared TTS   · gate: photo → clean image on device; TTS speaks
-- [ ] rembg (U2-Net) background removal
-- [ ] OpenCV white-balance + histogram + saliency crop
-- [ ] Failure-aware retake (keep original on damaged cut-out)
-- [ ] Texture close-up for textiles
-- [ ] Shared TTS voice (dependency for everything downstream)
+## Day 1 — Image pipeline + shared TTS   · gate: photo → clean image on device; TTS speaks   ✅ GATE PASSED
+- [x] rembg (U2-Net) background removal — GrabCut fallback if rembg absent (`pipelines/image/enhance.py`)
+- [x] OpenCV white-balance (scene Shades-of-Gray, clamped) + CLAHE lighting + saliency/bbox crop to square
+- [x] Failure-aware retake — mask-sanity (coverage + fragmentation), NOT internal contrast; keeps original
+- [x] Texture close-up for textiles
+- [x] Shared TTS voice — `pipelines/voice/tts.py` (pyttsx3 → macOS `say` fallback, offline)
+- [x] Smoke test `scripts/day1_smoke.py` + unit test `pipelines/image/test_enhance.py`
+- [ ] Extras deferred (build if time): blur/shake at capture, synthetic shadow, perspective de-skew, angle coach
 
 ## Day 2 — Voice → listing   · (mandated 2)
 - [ ] whisper.cpp transcription (server + on-device fallback)
