@@ -17,6 +17,15 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
       `opencv-python-headless==4.10.0.84`.
 - [x] **Do NOT import rembg** — it pulls pymatting+numba whose import-time JIT stalls for minutes.
       We run u2netp via onnxruntime directly instead. Keep it that way for any new bg work.
+- [!] **`import transformers` / heavy dist-info in the venv hangs tooling for 10–20 min.** Root
+      cause was `transformers` on `sys.path` — its import calls `importlib.metadata.packages_
+      distributions()` which walks every distribution. Removing `torch/transformers/IndicTrans2`
+      fixed it; `pytest` and `translate.py` are instant again. Rules: (1) `conda config --set
+      auto_activate_base false` is now set — keep `(base)` off. (2) run pytest with
+      `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`. (3) don't reintroduce torch/transformers (D11).
+      (4) `rm -rf` in zsh aborts entirely if any glob matches nothing — delete with explicit paths.
+- [!] **No `torch` / `transformers` in this project.** Removed 1 Sep (see above). If a future
+      task "needs" them, find a lighter path first (ONNX/CTranslate2, or an API).
 - [ ] **Heavy models are slow on the Air's CPU** — expected. Mask at ≤720px; on device / for the
       demo, plan server-side processing and pre-cached responses (Day 7).
 
@@ -42,6 +51,26 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
       warm-lit photos that it corrects the cast without over-blueing; the clamp is the safety net.
 - [ ] **rembg model is a ~176 MB download** (`~/.rembg/u2net.onnx`) on first use. For the demo/
       device path, pre-fetch it (ties into the Day-7 pre-cache + on-device model plan).
+
+## Day 2 — voice → listing
+
+- [ ] **faster-whisper first-run download** (`tiny` ~75 MB, `small` ~250 MB) to
+      `~/.cache/kaarigar/whisper/`. Pre-fetch for the demo/device path (ties into Day-7 pre-cache).
+- [ ] **whisper.cpp server is optional and unbuilt.** Code prefers it via `KAARIGAR_WHISPER_SERVER`
+      and falls back to on-device on any failure. If we want the server for the demo, build+test it
+      before Day 7, not on the day.
+- [ ] **Confidence gate is heuristic** (`exp(avg_logprob)` × `1-no_speech_prob`, threshold 0.55).
+      Tune the threshold against real regional-language notes so it re-records genuine mishears
+      without nagging on clean audio.
+- [ ] **`say`/pyttsx3 TTS is not a real speaker** — `day2_smoke` proves the plumbing, not accent
+      robustness. Gate must still be checked with an actual human voice note per language.
+- [!] **No standalone MT model (D11).** `translate()` is a passthrough; **Gemini (step 3) must do
+      the actual regional→EN+HI translation.** Verify Gemini output quality per language against a
+      real note. Offline, the listing text stays in the source language — acceptable degradation,
+      but note it in the demo script.
+- [ ] **Gemini now carries translation + description** — a single point of failure for the whole
+      listing text and subject to free-tier caps. Pre-cache every demo item (Day 7); keep a
+      templated fallback listing (attributes → sentence) for a hard API outage.
 
 ## Day 3 — offline queue
 

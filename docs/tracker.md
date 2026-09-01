@@ -24,9 +24,18 @@ Roadmap: [`planning/KaarigarAI_9Day_Roadmap.md`](planning/KaarigarAI_9Day_Roadma
 - [ ] Extras deferred (build if time): blur/shake at capture, synthetic shadow, perspective de-skew, angle coach
 
 ## Day 2 — Voice → listing   · (mandated 2)
-- [ ] whisper.cpp transcription (server + on-device fallback)
-- [ ] IndicTrans2 translation
-- [ ] Gemini bilingual description
+- [x] whisper.cpp transcription (server + on-device fallback) — `pipelines/voice/transcribe.py`
+      server (`KAARIGAR_WHISPER_SERVER`) → faster-whisper int8 fallback, confidence +
+      `needs_rerecord`. Smoke `scripts/day2_smoke.py` **ran on the Air 1 Sep**: `tiny` model
+      downloaded, real decode, backend works, confidence gate fires correctly
+      (0.36 on synthetic TTS audio → `needs_rerecord=True`). Tests 10/10 pass (use
+      `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`). Caveat: quality on `tiny` + robotic `say` voice is
+      poor — **re-check gate with a real human voice note per language** (watchlist).
+- [x] Translation — `pipelines/voice/translate.py`. Passthrough (keeps `TranslationResult`
+      contract); **Gemini does the real MT in step 3.** IndicTrans2/torch/transformers cut after
+      `import transformers` hung ~20 min on the conda-based venv (D11 revised, watchlist).
+      Optional real path behind `KAARIGAR_MT=indictrans2`. Tests + smoke green, instant.
+- [ ] Gemini bilingual description — **also does regional→EN+HI translation now** (D11)
 - [ ] Glossary fuzzy-correct · PII strip · low-confidence re-record
 - [ ] Spoken read-back confirmation
 

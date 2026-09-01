@@ -15,6 +15,77 @@ Format:
 
 ---
 
+## 2026-09-01 — Voice → listing, step 2: translation = passthrough (Gemini does MT)   [Day 2]
+**Done:** `pipelines/voice/translate.py` — `translate(text, source_lang)` → `TranslationResult`
+(`text`, `source_text`, `source_lang`, `translated` bool, `backend`, `model`, `error`). Contract
+kept so downstream code is stable, but there is **no standalone MT model**: `translate()` is a
+passthrough that returns the source text unchanged (`translated=False`) and normalises/carries
+`source_lang` so the Gemini step (step 3) knows what it's being handed. Gemini translates:
+regional transcript → EN + HI in one call.
+
+**Why the change (same day):** the first cut used IndicTrans2-200M via HF `transformers`.
+`import transformers` hung for **~20 min** on this machine — it calls
+`importlib.metadata.packages_distributions()` which enumerates every distribution on `sys.path`,
+and the venv is built on the anaconda Python so that tree is enormous. `torch` (2.13.0, imported
+fine at ~2 s) is a ~200 MB dep nothing else in the project uses. Removed all three
+(`torch transformers IndicTransToolkit`) — see watchlist "conda base poisons package enumeration"
+and decision D11 (revised).
+
+An optional real path survives behind `KAARIGAR_MT=indictrans2` (lazy imports, untouched
+otherwise) for later use on a clean non-conda machine. Not for the demo.
+
+**How to run / verify:**
+```
+source .venv/bin/activate
+python -m scripts.day2_smoke        # [mt] line now shows backend=passthrough, instant
+pytest pipelines/voice/test_translate.py -q
+python -m pipelines.voice.translate "यह हाथ से बनी नीली मिट्टी की मटकी है" hi
+```
+No model downloads. Tests are pure-Python, instant.
+
+**Notes / gotchas:** `backend/requirements.txt` no longer lists torch/transformers/IndicTrans2.
+`rm -rf .venv/lib/python3.12/site-packages/{torch*,transformers*,IndicTransToolkit*}` was used to
+remove them (pip uninstall also hangs on the same sys.path scan). **Always `conda deactivate`
+before working in this venv.**
+**Commit:** pending
+
+## 2026-09-01 — Voice → listing, step 1: transcription   [Day 2]
+**Done:** `pipelines/voice/transcribe.py` — `transcribe(audio_path, lang=None, prefer_server=True)`
+returns a `TranscriptResult` (text, detected language + prob, 0–1 `confidence`, `needs_rerecord`,
+per-segment list, backend/model, `error`). Two backends, one return type:
+- **server (default when online):** whisper.cpp `./server` at `KAARIGAR_WHISPER_SERVER=http://host:port`
+  (`/inference`, `verbose_json`). Tried first when the env var is set.
+- **on-device fallback:** `faster-whisper` (CTranslate2), `device=cpu compute_type=int8`, model
+  `small` when the server path was intended else `tiny` (config `models.transcribe.*`). Any server
+  failure silently falls back here and records a note in `.error`.
+Both whisper imports are **lazy** (module import does nothing heavy — same rule as onnxruntime/rembg).
+Confidence = duration-weighted mean of `exp(avg_logprob)` per segment, discounted by `no_speech_prob`;
+below `models.transcribe.min_confidence` (0.55) → `needs_rerecord=True` (caller asks for a re-record).
+Model cache: `~/.cache/kaarigar/whisper/`.
+
+**How to run / verify:**
+```
+source .venv/bin/activate
+pip install --disable-pip-version-check faster-whisper   # keyring already disabled globally
+python -m scripts.day2_smoke        # TTS a known Hindi line -> transcribe it back -> PASS
+pytest pipelines/voice/test_transcribe.py -q
+```
+`day2_smoke` needs no server and no recording: it synthesises a sentence via the Day-1 TTS and
+round-trips it. First run downloads the `tiny` model (~75 MB) once.
+
+**Notes / gotchas:** faster-whisper pulls `av` (PyAV) for decoding — handles the `.aiff` that macOS
+`say` produces, no ffmpeg needed. whisper.cpp server is optional and not bundled; without the env var
+the on-device path is always used. Translation/description/glossary/PII/read-back still TODO.
+
+**Smoke result (1 Sep, on the Air):** `day2_smoke` passed step-1 gate. `tiny` model auto-downloaded,
+`say`-synthesised Hindi line decoded via faster-whisper. Transcription **quality was poor**
+(`"Yehav Sabani Nili midi keem atki hi..."` for `"Yeh haath se bani neeli mitti ki matki hai..."`) —
+`tiny` + robotic TTS is the worst case. The **confidence gate worked**: 0.355 < 0.55 →
+`needs_rerecord=True`. Real human audio + `tiny` does better; gate still needs a human voice note
+per language before Day 7. Tests: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest pipelines/voice/ -q`
+→ 10 passed (the env var is required — see watchlist, conda/pytest).
+**Commit:** pending
+
 ## 2026-09-01 — Perf fix: drop rembg, run u2netp via onnxruntime   [Day 1 hardening]
 **Problem:** on the target MacBook Air (arm64, native — not Rosetta), the pipeline crawled/hung:
 `import cv2` took **25 s** (OpenCV **5.0.0** beta had a bad arm64 build), and `import rembg`

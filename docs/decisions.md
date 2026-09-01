@@ -15,6 +15,10 @@ Add a row when a real choice is made. `D#` ids are stable; reference them in com
 | D8 | **White balance is scene-based Shades-of-Gray with clamped gains**, not gray-world over the subject. | Gray-world over the subject neutralises a strongly single-coloured product — a blue pot came out grey. Estimating the illuminant from the whole frame corrects the cast while keeping the product's colour. | 30 Aug (Day 1) |
 | D9 | **Background removal runs u2netp directly via onnxruntime; the `rembg` wrapper is dropped.** OpenCV pinned to 4.10.x; pip keyring disabled. | rembg imports pymatting+numba whose JIT stalls for minutes on the dev machine; onnxruntime imports in ~0.1s. OpenCV 5.0.0 (beta) imported in 25s; 4.10 in ~1s. pip froze on the macOS Keychain until keyring was disabled. All verified on the target MacBook Air (arm64). | 1 Sep (Day 1) |
 
+| D10 | **Transcription uses `faster-whisper` (CTranslate2) on-device as the default backend**, with an optional whisper.cpp `server` tried first only when `KAARIGAR_WHISPER_SERVER` is set. One `TranscriptResult` type for both. | Actual `whisper.cpp` needs a compiled binary per platform; `faster-whisper` is pip-installable, int8 on CPU, and gives per-segment `avg_logprob` for the confidence gate. Server stays as an online speed/accuracy upgrade without changing callers. | 1 Sep (Day 2) |
+
+| D11 | **No standalone MT model. Gemini (step 3) translates: it takes the regional transcript directly and emits EN + HI.** `translate()` is a passthrough keeping the `TranslationResult` contract; a real IndicTrans2 path exists but only behind `KAARIGAR_MT=indictrans2`. | *Originally:* IndicTrans2-200M via HF `transformers`. **Revised same day:** `import transformers` stalled ~20 min on the anaconda-based venv (it enumerates every distribution on `sys.path`); `torch` is a ~200 MB dep nothing else needs. Second heavy-ML-dep swamp after rembg. Gemini already produces the bilingual text and handles regional input well; a separate MT stage bought little. Offline → transcript passes through untranslated, glossary + read-back still work. | 1 Sep (Day 2) |
+
 ## Open decisions
 
 | # | Question | Leaning | Decide by |
