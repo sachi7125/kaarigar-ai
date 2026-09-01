@@ -33,7 +33,8 @@ pricing:
   material_rate_table: data/reference/material_rates.csv   # dated + sourced
   reference_set: data/reference/pricing_reference.csv
   comparables_shown: 3           # evidence strip before the model number
-  # material comes from voice, NOT from the photo (D2)
+  # material TYPE comes from the voice note, never the photo (D2).
+  # material COST is derived — type x rate_table x size(photo+voice) — never asked (D13).
 
 offers:
   asking_price_tolerance_frac: 0.05   # below asking - 5% -> auto-decline

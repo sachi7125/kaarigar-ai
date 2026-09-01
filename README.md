@@ -17,9 +17,11 @@ not started. Work is tracked in [`docs/tracker.md`](docs/tracker.md) against the
 
 1. **AI Image Enhancer** — a rough phone photo → clean e-commerce image (rembg + OpenCV).
 2. **Multilingual Auto-Cataloger** — a regional voice note → bilingual listing, read back aloud
-   and confirmed by voice (whisper.cpp + IndicTrans2 + Gemini).
+   and confirmed by voice (whisper + Gemini; Gemini also does the EN+HI translation).
 3. **Dynamic Pricing Assistant** — image + voice → a price *band* with a plain explanation and a
-   fair-price floor (XGBoost + SHAP). Material comes from her voice, not a photo classifier.
+   fair-price floor (XGBoost + SHAP). She never enters a price or a cost: material *type* comes
+   from her voice note, and the cost is derived from current rates — not a photo classifier, not a
+   question.
 4. **Market linkage** — permanent listing page, per-artisan **storefront**, structured **offer**
    inbox with stock, export bundle (GeM/ONDC/Karigar/ODOP), share card, stall QR.
 
@@ -71,7 +73,8 @@ Secrets (Google Routes/Maps key, Gemini key, DB URL) live in `.env` — never co
 
 ## Locked scope (see docs/decisions.md)
 
-No buyer marketplace (storefront + direct offer instead) · no material classifier (material from
-voice) · dated + sourced material rates on screen · listings carry stock · per-artisan storefront.
+No buyer marketplace (storefront + direct offer instead) · no material classifier (material type
+from voice) · material cost derived, never asked (D13) · dated + sourced material rates on screen ·
+listings carry stock · per-artisan storefront.
 **Out:** payment, shipping, dispute resolution, live auctions, WhatsApp ingestion — full cut list
 in the roadmap.

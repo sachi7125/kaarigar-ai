@@ -12,6 +12,27 @@ This file is the quick "where are we / what next".
 
 ---
 
+## 2026-09-01 — Decision D13: material cost is derived, never asked
+
+**What changed:** the pricing feature will **not** ask the artisan for her material cost (the
+old plan: "material cost asked once per craft type"). That re-introduced the exact burden the
+product removes. Instead: `cost ≈ material type (from the voice note) × ₹/unit (dated rate
+table) × size/weight (photo + voice)`. Spoken confirmations stay, but are **attribute-only**
+("brass or bronze?"), never about price.
+
+**Docs updated:** `decisions.md` (new **D13**, D2 reworded), `watchlist.md` (Day-4 items),
+`tracker.md` (Day 4), `planning/KaarigarAI_9Day_Roadmap.md` (scope para, Day-4 gate + body,
+Day-7 hardening, watch item, cut list; also folded in D11 — no standalone MT model),
+`README.md`, `config/config.yaml` (pricing comment).
+
+**Still to do:** the binary deliverables (`docs/deliverables/*.pdf/.pptx/.docx` — proposal,
+deck, architecture, wireframes) still say "material cost asked" / "IndicTrans2" in places.
+They need a matching pass before submission (Day 9). Not editable as text — flagged here.
+
+**Next task:** unchanged — Day 2 step 4 (glossary + PII + re-record loop).
+
+---
+
 ## 2026-09-01 (later still) — Claude session — Day 2 step 3: Gemini bilingual listing
 
 **Done**

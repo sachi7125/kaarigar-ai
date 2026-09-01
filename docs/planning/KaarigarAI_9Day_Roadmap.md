@@ -17,18 +17,19 @@ a part-time one. Two ordering rules decide the whole plan:
   a buyer needs somewhere to send an offer from, and the storefront is aggregation over pages
   the listing work already produces.
 
-Scope is locked by five decisions already made: **no buyer marketplace** (permanent listing
-page + storefront + direct offer instead), **no material classifier** (material comes from her
-voice, the photo only suggests category/size/finish), **dated + sourced material rates on
-screen**, **listings carry stock** (unique or batch), and a **per-artisan storefront** as the
-year-round channel.
+Scope is locked by decisions already made: **no buyer marketplace** (permanent listing
+page + storefront + direct offer instead), **no material classifier** (material *type* comes
+from her voice, the photo only suggests category/size/finish), **the material cost is derived,
+never asked** (type × dated rate table × photo-estimated size — D13), **dated + sourced
+material rates on screen**, **listings carry stock** (unique or batch), and a **per-artisan
+storefront** as the year-round channel.
 
 ## Non-negotiable gates (do not skip under time pressure)
 
 | Gate | Day | If it fails |
 |---|---|---|
 | Photo **+** voice note → bilingual listing, **read back aloud**, on a real device | 3 | The low-literacy claim is the whole product. Fix the pipeline before pricing. |
-| The floor visibly **refuses an underpriced** suggestion; material is **never inferred from the photo** | 4 | Pricing logic is wrong — stop and fix before building on it. |
+| The floor visibly **refuses an underpriced** suggestion; **no cost question is ever asked**; material type is **never inferred from photo pixels** | 4 | Pricing logic is wrong — stop and fix before building on it. |
 | A **batch** listing sells down with **no double-accept**; artisan accepts **by voice** | 5 | The stock/offer transaction is wrong. Don't demo it. |
 | Full seven-beat demo runs **twice with no internet** | 7 | Record the video now and stop polishing the live path. |
 
@@ -54,8 +55,9 @@ inside a training or batch loop.
 - **Exit:** a raw phone photo → clean e-commerce image on a real device; TTS speaks a string aloud.
 
 ### Day 2 — Voice → listing ▲
-- **Multilingual Auto-Cataloger** (mandated 2): whisper.cpp transcription (server default,
-  on-device fallback), IndicTrans2 translation, Gemini bilingual description.
+- **Multilingual Auto-Cataloger** (mandated 2): whisper transcription (whisper.cpp server default,
+  faster-whisper `small` on-device fallback), Gemini bilingual description — Gemini also does the
+  regional→EN+HI translation, no standalone MT model (D11).
 - Craft-glossary fuzzy-correct · **PI-strip** (identifier-like digit runs) · low-confidence
   re-record · **spoken read-back confirmation** — nothing published without it.
 - **Exit:** a regional-language voice note → bilingual listing, read back aloud, confirmed by voice.
@@ -68,15 +70,16 @@ inside a training or batch loop.
   and the Day-2 pipeline runs end to end on a real device.
 
 ### Day 4 — Dynamic pricing ▲ · GATE
-- **Attributes:** vision proposes category / size class / finish as a *suggestion*; **material
-  comes from the voice note**; 0–2 spoken confirmations. **No material classifier is trained.**
-- Material cost asked **once per craft type** (stored against her); **dated, sourced material-rate
-  table** as fallback, printed on screen.
+- **Attributes:** vision proposes category / size class / finish as a *suggestion*; the **material
+  type comes from the voice note**; 0–2 spoken confirmations, **attribute-only** ("brass or
+  bronze?"), never about price or cost. **No material classifier is trained.**
+- **Material cost is derived, never asked (D13):** `type (voice) × ₹/unit (dated, sourced rate
+  table) × size / weight (photo + voice)`. The rate table's **date + source printed on screen**.
 - XGBoost price **band** · SHAP three bars · **comparables evidence strip** (3 similar listings +
-  her ~cost) shown *before* the model number · **fair-price floor** (warn, never block) · bounded
-  seasonal multiplier · out-of-range honesty (wider band, stated low confidence).
-- **Exit gate:** photo + voice → price band with a plain explanation, the floor **visibly refusing**
-  an underpriced suggestion, and the rate's **date + source on screen**.
+  the **derived** material cost) shown *before* the model number · **fair-price floor** (warn,
+  never block) · bounded seasonal multiplier · out-of-range honesty (wider band, stated low confidence).
+- **Exit gate:** photo + voice → price band with a plain explanation, **no cost question asked**,
+  the floor **visibly refusing** an underpriced suggestion, and the rate's **date + source on screen**.
 
 ### Day 5 — Onboarding + listing page + offer/stock ▲ · GATE
 - **Voice-first onboarding:** language tiles that speak their own name, numeric keypad, OTP read
@@ -102,6 +105,7 @@ inside a training or batch loop.
 ### Day 7 — Edge-case hardening + offline rehearsal + pre-cache ⚠ · GATE
 - Harden the register that causes visible failure: noisy audio → re-record · mis-heard craft word →
   glossary correct · PI digits stripped · pale-on-pale → retake · unseen category → wider band ·
+  material not in the rate table → wider band + stated low confidence (never a cost prompt) ·
   per-piece vs per-set → ask · two buyers / one batch → locked decrement · no offers for a week →
   reasoned nudge · growing offline queue → cap + downscale + oldest-first · middleman → account &
   QR bound to her own number, earnings only in her view.
@@ -147,13 +151,16 @@ read-back (the low-literacy claim), and the storefront + offer (the market-linka
   mitigation. Decide and test the API fallback on Day 7, not on the day.
 - **Permanent URL scheme is irreversible** once a stall QR is printed — freeze the artisan/listing id
   format deliberately (Day 5), not by accident later.
-- **Pricing quality now rests on one spoken answer** (her material cost) — if it's misheard, the floor
-  is wrong. Confirm it by voice.
+- **Pricing derives the material cost (D13), never asks for it** — the weak links are the material
+  word in the transcript (glossary + an attribute confirm, not a price prompt) and the rate table's
+  coverage (every demo craft needs a row). Floor is a warning (D3), so a wrong derived cost never
+  locks her out.
 - **Middleman capture** — bind account + stall QR to her own number, earnings visible only in her view.
 
 ## Cut list — still out (from the proposal)
 
 payment · shipping · **dispute resolution** (the report-an-issue record only logs) · full live auctions ·
 WhatsApp inbound listing · cooperative / self-help-group storefront · peer benchmarking · multi-angle
-spin view · buyer accounts & order history · automated material-rate refresh · AI upscaling · the ~16
-further languages the models support but that aren't tested.
+spin view · buyer accounts & order history · automated material-rate refresh · **asking the artisan
+her material cost** (derived instead — D13) · a standalone IndicTrans2 MT model (Gemini does EN+HI — D11) ·
+AI upscaling · the ~16 further languages the models support but that aren't tested.

@@ -55,11 +55,14 @@ Roadmap: [`planning/KaarigarAI_9Day_Roadmap.md`](planning/KaarigarAI_9Day_Roadma
 - [ ] GATE: capture+record+queue works offline and syncs with no duplicate
 
 ## Day 4 — Dynamic pricing   · (mandated 3) · GATE
-- [ ] Attribute extraction (vision suggests; material from voice; 0–2 spoken confirms)
-- [ ] Material cost asked once/craft type · dated material-rate table (source on screen)
-- [ ] XGBoost band · SHAP three bars · comparables evidence strip
+- [ ] Attribute extraction (vision suggests category/size/finish; material *type* from voice;
+      0–2 spoken confirms — attribute-only, never price/cost — D13)
+- [ ] Material cost **derived, not asked**: type (voice) × rate (dated table) × size/weight
+      (photo + voice); rate date + source on screen (D13)
+- [ ] XGBoost band · SHAP three bars · comparables evidence strip (3 similar + the derived cost)
 - [ ] Fair-price floor (warn, not block) · bounded seasonal multiplier · out-of-range honesty
-- [ ] GATE: floor visibly refuses an underpriced suggestion; no material inferred from photo
+- [ ] GATE: floor visibly refuses an underpriced suggestion; no cost question anywhere;
+      material not inferred from photo pixels
 
 ## Day 5 — Onboarding + listing page + offer/stock   · GATE
 - [ ] Voice-first onboarding (speaking tiles, keypad, OTP read aloud, deferred verification)

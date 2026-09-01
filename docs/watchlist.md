@@ -93,10 +93,15 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
 
 ## Day 4 — pricing
 
-- [ ] **No material classifier.** Material comes from the voice note; the photo only *suggests*
-      category/size/finish. If any code tries to infer material from pixels, remove it.
-- [ ] **Pricing quality rests on one spoken answer** (her material cost). If it's misheard the
-      floor is wrong — confirm it by voice.
+- [ ] **No material classifier.** Material *type* comes from the voice note; the photo only
+      *suggests* category/size/finish. If any code tries to infer material from pixels, remove it.
+- [ ] **Material cost is DERIVED, never asked (D13).** `cost ≈ material type (voice) × rate
+      (dated table) × size/weight (photo + voice)`. No spoken cost question. The fragile links are
+      now: (a) the material word in the transcript — handle with the glossary + an attribute
+      confirm, not a price prompt; (b) the rate table's coverage — every craft in the demo set
+      must have a row. Floor stays a warning (D3), so a wrong derived cost never blocks her.
+- [ ] **Spoken confirmations are attribute-only.** 0–2 questions like "brass or bronze?" —
+      never "what did it cost". If any pricing code adds a cost/price question, remove it.
 - [ ] **The floor is a warning, not a quote.** It must warn on an underpriced listing and then
       *allow the override*. Do not lock her out of her own pricing.
 - [ ] **Material rates are a dated snapshot.** Print the rate's date + source on screen; the
