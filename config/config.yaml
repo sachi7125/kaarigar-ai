@@ -9,10 +9,12 @@ languages:
 models:
   transcribe:
     server: whisper-small       # default when online
-    on_device: whisper-tiny-q   # ~70 MB, fetched on first sync, offline fallback
+    on_device: whisper-small    # ~465 MB, fetched on first sync, offline fallback.
+                                # tiny/base are unusable for Hindi (garbled, conf ~0.25);
+                                # small gets it right at conf ~0.70 — see stt_probe / build_log 1 Sep.
     min_confidence: 0.55        # below -> ask for a re-record
-  translate: indictrans2-200M-distilled
-  describe:  gemini-free
+  translate: passthrough           # no standalone MT model (D11); Gemini does EN+HI
+  describe:  gemini-free            # -> gemini-3.6-flash over REST (needs a free-tier key; else template)
   tts:       offline-voice       # shared: read-back, onboarding, alerts, nudges
 
 image:

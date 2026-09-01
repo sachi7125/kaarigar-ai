@@ -12,6 +12,77 @@ This file is the quick "where are we / what next".
 
 ---
 
+## 2026-09-01 (later still) — Claude session — Day 2 step 3: Gemini bilingual listing
+
+**Done**
+- `pipelines/voice/describe.py` — `describe(transcript, lang, attributes)` → `ListingDraft`
+  (title/description/bullets in EN+HI, seo_keywords, category, materials). Gemini also does
+  the translation (D11).
+- Gemini called over **REST via `requests`** — NOT the `google-generativeai` SDK (deprecated,
+  156 s import, re-broke pytest; installed then `rm -rf`'d). See D12.
+- Disk cache `data/processed/listing_cache/` (gitignored) = the Day-7 pre-cache mechanism.
+- Offline template fallback — no key / quota / offline → still produces a bilingual listing.
+- `common.py`: `load_env()` / `env_get()` for `.env`; added `.env.example`.
+- Tests 16/16 pass. `day2_smoke` extended to step 3.
+
+**NOT working / open issue**
+- ⚠️ **Gemini API key has no quota.** Every current model returns HTTP 429 "prepayment credits
+  are depleted"; older models 404 "not available to new users". The key's project is on prepay
+  billing with no free tier. **Code path is fully verified** (REST fires, errors handled,
+  template fallback works) — this is purely account-side.
+  **Fix:** aistudio.google.com → new project → new API key (free tier auto-applies) → replace
+  in `.env`. If a fresh project still 429s, the account/region has no free Gemini tier.
+
+**Next task (priority order)**
+1. **Get a working Gemini key** (above) and confirm `describe.py` returns `source=gemini` with
+   a real bilingual listing. Then populate `listing_cache/` with the demo items.
+2. Day 2 step 4 — `glossary.py` (craft-vocab fuzzy-correct) + `pii_strip.py` (identifier-like
+   digit runs) + the low-confidence **re-record loop** (speak prompt via `tts.py`, re-capture,
+   cap retries).
+3. Day 2 step 5 — spoken read-back confirmation (reuse `tts.py`). Nothing publishes without it.
+
+**Notes for whoever's next**
+- Repo on `~/Desktop` (iCloud-synced) makes every Python import slow (~30 s pytest, ~3 min
+  for a one-off script). Consider moving to `~/dev/`. Not blocking.
+- Do NOT install `google-generativeai` / `grpcio` / `torch` / `transformers` (watchlist).
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` for pytest.
+
+---
+
+## 2026-09-01 (later) — Claude session — voice recognition FIXED
+
+**Done**
+- Diagnosed the garbled transcription with `scripts/stt_probe.py` (new) on a real 6.5s
+  Hindi note ("ye ek clay ka bartan hai"): `tiny` and `base` are **unusable for Hindi**
+  (conf ~0.25, garbage text); `small` gets it right — "ये एक क्ले का बर्तन है" at conf **0.70**,
+  clearing the 0.55 gate. The confidence metric was fine all along; it was the model.
+- `config/config.yaml`: `models.transcribe.on_device` `whisper-tiny-q` → **`whisper-small`**.
+- `pipelines/voice/transcribe.py` `_transcribe_fw`: `vad_filter=False` (was clipping short
+  notes) + `condition_on_previous_text=False` (cleaner one-shot text). Evidence in build_log.
+- `scripts/stt_probe.py` added — reusable STT diagnostic (audio metadata + model/setting sweep).
+
+**Still open / caveats**
+- `small` steady-state ~2.6s for a 6.5s note on the Air — acceptable. First-ever run
+  downloads the model (~465 MB).
+- Minor residual errors (बर्तन→बर्दन; English loanwords like "clay") — acceptable, Gemini
+  handles them. Optional later: seed whisper with an `initial_prompt` of craft vocabulary.
+- Re-test on Bengali / Tamil / Marathi notes before Day 7.
+- `day2_smoke.py` still uses robotic `say` audio → will still show low conf there; that's the
+  test's synthetic input, not the system. Real audio is the real check.
+
+**Next task (priority order)**
+1. Day 2 step 3 — Gemini bilingual description (`pipelines/voice/describe.py`): transcript +
+   confirmed attributes → EN + HI listing text, templated offline fallback for API outages.
+2. Day 2 step 4 — glossary fuzzy-correct (`glossary.py`) + PII-digit strip (`pii_strip.py`) +
+   low-confidence re-record loop (speak prompt via `tts.py`, re-capture, cap retries).
+3. Day 2 step 5 — spoken read-back confirmation (reuse `tts.py`).
+
+**Notes for whoever's next**
+- Same as previous entry. Plus: transcription config is now `whisper-small`; expect a
+  one-time ~465 MB download on a fresh machine.
+
+---
+
 ## 2026-09-01 — Claude session (Day 2, steps 1–2)
 
 **Done**

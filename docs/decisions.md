@@ -19,6 +19,8 @@ Add a row when a real choice is made. `D#` ids are stable; reference them in com
 
 | D11 | **No standalone MT model. Gemini (step 3) translates: it takes the regional transcript directly and emits EN + HI.** `translate()` is a passthrough keeping the `TranslationResult` contract; a real IndicTrans2 path exists but only behind `KAARIGAR_MT=indictrans2`. | *Originally:* IndicTrans2-200M via HF `transformers`. **Revised same day:** `import transformers` stalled ~20 min on the anaconda-based venv (it enumerates every distribution on `sys.path`); `torch` is a ~200 MB dep nothing else needs. Second heavy-ML-dep swamp after rembg. Gemini already produces the bilingual text and handles regional input well; a separate MT stage bought little. Offline → transcript passes through untranslated, glossary + read-back still work. | 1 Sep (Day 2) |
 
+| D12 | **Gemini is called over plain REST (`requests`), not the `google-generativeai` SDK.** `describe.py` also does translation (D11). Disk cache at `data/processed/listing_cache/` = the Day-7 pre-cache path. Offline / no key / quota → offline template listing, never a hard failure. | The SDK is deprecated *and* imports in ~156 s on this venv (grpc/proto sys.path scan — the transformers problem again). One `POST` to `generativelanguage.googleapis.com/...:generateContent` needs only `requests` (already a dep). Free-tier model names churn fast (`1.5-flash`→404, `2.5-flash`→"not for new users", `3.6-flash`→needs credits) so the model id is config-driven. | 1 Sep (Day 2) |
+
 ## Open decisions
 
 | # | Question | Leaning | Decide by |

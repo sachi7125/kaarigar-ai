@@ -14,7 +14,9 @@ onnxruntime>=1.17      # runs u2netp for background removal directly (no rembg w
 opencv-python-headless==4.10.0.84   # PIN to 4.x: 5.0.0 imports in ~25s on arm64
 pillow>=10.3
 faster-whisper>=1.0   # whisper.cpp-style inference (transcription)
-google-generativeai>=0.7   # Gemini free tier (description AND translation — see D11)
+# Gemini (description + translation, see D11) is called over plain REST via `requests` —
+# NO `google-generativeai` SDK: it's deprecated and imports in ~156s on this venv.
+python-dotenv>=1.0         # already listed above; loads .env for GEMINI_API_KEY
 # NO torch / transformers / IndicTrans2: `import transformers` stalled ~20 min on the
 # anaconda-based venv (enumerates every dist on sys.path). Translation is a passthrough;
 # Gemini does regional->EN+HI directly. Optional real MT lives behind KAARIGAR_MT=indictrans2.

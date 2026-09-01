@@ -54,16 +54,15 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
 
 ## Day 2 — voice → listing
 
-- [ ] **faster-whisper first-run download** (`tiny` ~75 MB, `small` ~250 MB) to
+- [ ] **faster-whisper first-run download** — now `small` (~465 MB, CTranslate2 int8) to
       `~/.cache/kaarigar/whisper/`. Pre-fetch for the demo/device path (ties into Day-7 pre-cache).
 - [ ] **whisper.cpp server is optional and unbuilt.** Code prefers it via `KAARIGAR_WHISPER_SERVER`
       and falls back to on-device on any failure. If we want the server for the demo, build+test it
       before Day 7, not on the day.
-- [!] **Voice recognition quality is currently poor — OPEN, must fix before the gate passes.**
-      Smoke test (`tiny` model + robotic `say` voice) decoded Hindi garbled at conf 0.35. The
-      confidence gate caught it (`needs_rerecord=True`), so bad text won't reach a listing, but the
-      pipeline can't demo like this. Fix path: real-audio eval per language → bump `on_device` to
-      `whisper-base`/`small` → or build the whisper.cpp server. Tracked in `logs.md`.
+- [x] **Voice recognition quality — FIXED 1 Sep.** `tiny`/`base` are unusable for Hindi
+      (garbled, conf ~0.25); moved `on_device` to `whisper-small` (conf 0.70 on a real note) +
+      `vad_filter=False` + `condition_on_previous_text=False`. Diagnostic: `scripts/stt_probe.py`.
+      Still to do: re-test bn/ta/mr before Day 7; `small` is ~465 MB (pre-cache for the demo).
 - [ ] **Confidence gate is heuristic** (`exp(avg_logprob)` × `1-no_speech_prob`, threshold 0.55).
       Tune the threshold against real regional-language notes so it re-records genuine mishears
       without nagging on clean audio.
@@ -73,9 +72,16 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
       the actual regional→EN+HI translation.** Verify Gemini output quality per language against a
       real note. Offline, the listing text stays in the source language — acceptable degradation,
       but note it in the demo script.
-- [ ] **Gemini now carries translation + description** — a single point of failure for the whole
-      listing text and subject to free-tier caps. Pre-cache every demo item (Day 7); keep a
-      templated fallback listing (attributes → sentence) for a hard API outage.
+- [!] **Gemini carries translation + description** — single point of failure, subject to free-tier
+      caps. Template fallback (`describe.py`) + disk cache built. **OPEN: the current API key hits
+      429 "prepayment credits depleted"** — need a fresh free-tier AI Studio key before the gate
+      can show real Gemini output. Pre-cache every demo item Day 7 (the `listing_cache/` dir is the
+      mechanism — populate it online, it replays offline).
+- [!] **Never install `google-generativeai`** (or `google-api-python-client`, `grpcio`) — SDK is
+      deprecated, imports in ~156 s, and its dep tree re-broke pytest. Gemini is REST via `requests`.
+- [ ] **Free-tier Gemini model names churn** — `1.5-flash` gone, `2.5-flash` "not for new users",
+      `3.6-flash` current. `models.describe` in config.yaml is the single place to change it;
+      `curl .../v1beta/models` lists what a key can see.
 
 ## Day 3 — offline queue
 

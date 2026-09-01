@@ -15,6 +15,81 @@ Format:
 
 ---
 
+## 2026-09-01 — Voice → listing, step 3: Gemini bilingual description   [Day 2]
+**Done:** `pipelines/voice/describe.py` — `describe(transcript, lang="hi", attributes=None)`
+→ `ListingDraft` (`title_en/hi`, `description_en/hi`, `bullets_en/hi`, `seo_keywords`,
+`category`, `materials`, `source`, `error`). Turns a transcript (+ any confirmed attributes)
+into a bilingual marketplace listing. Gemini also does the translation here (D11).
+
+- **Gemini backend = plain REST** via `requests` (D12): `POST v1beta/models/{model}:generateContent`,
+  `x-goog-api-key` header, `responseMimeType: application/json`. **No `google-generativeai` SDK** —
+  it's deprecated and imports in ~156 s here (grpc/proto sys.path scan). The 24-package SDK tree
+  was installed then removed with `rm -rf` (it also re-broke pytest, like transformers had).
+  Model id is config-driven (`models.describe` → `_MODEL` map); default `gemini-3.6-flash`.
+- **Prompt** pins the voice note as source of truth: never invent materials/dimensions/prices;
+  short; EN + natural Hindi; 6–10 SEO terms; one-phrase category. Strict-JSON parse with a
+  fence-strip + first-`{…}` fallback.
+- **Disk cache** `data/processed/listing_cache/<sha1>.json` keyed by transcript+attributes —
+  checked before any call, written on every success. This *is* the Day-7 pre-cache path
+  (run once online → replays offline). API never called in a loop. Dir is gitignored.
+- **Offline template fallback** — no key / 429 / offline / non-JSON → builds a serviceable
+  bilingual listing from attributes + the transcript (Hindi side keeps the maker's own words
+  rather than risk a bad offline translation). `.error` explains. Never blocks.
+- `pipelines/common.py`: added `load_env()` / `env_get()` (loads repo `.env`; `python-dotenv`
+  with a minimal hand-parser fallback). `.env.example` added.
+
+**How to run / verify:**
+```
+source .venv/bin/activate
+python -m pipelines.voice.describe "ये एक क्ले का बर्दन है" hi     # source=gemini (or template)
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest pipelines/voice/ -q   # 16 passed
+python -m scripts.day2_smoke                                       # step-3 line: OK
+```
+
+**Notes / gotchas — Gemini key:** the test key returns **HTTP 429 "prepayment credits are
+depleted"** on every current model; older models (`gemini-2.5-flash`) return 404 "not available
+to new users". The project is on prepay billing with no free tier. **Fix is account-side:** new
+AI Studio project → new key → free tier applies. Code path is fully verified (REST call fires,
+429/404 handled, template fallback produces a listing). `gemini-generativeai` deprecation +
+fast-churning free-tier model names are why the model id is config-driven.
+**Commit:** pending
+
+## 2026-09-01 — Voice recognition fix: whisper-small, VAD off   [Day 2 hardening]
+**Problem:** on-device transcription was garbled on a real Hindi voice note
+("ye ek clay ka bartan hai"): `tiny` gave "Kali ka bardin hai" at confidence 0.25.
+
+**Diagnosis:** `scripts/stt_probe.py` (new) — prints audio metadata then sweeps model
+sizes × decode settings on one file. Results on the 6.5s note:
+
+| trial | det-lang | conf | text |
+|---|---|---|---|
+| tiny  / vad+beam5      | hi/1.00 | 0.247 | `1. Kali ka bardin hai` |
+| base  / vad+beam5      | hi/1.00 | 0.294 | `अे गे का बर्दन है` |
+| base  / NO-vad         | hi/1.00 | 0.176 | `ں 1 CLAY Ka Barthin Hai` |
+| small / vad+beam5      | hi/1.00 | 0.701 | `ये एक ख्ले का बर्दन है` |
+| small / NO-vad + noprev| hi/1.00 | 0.642 | `ये एक क्ले का बर्दन है` |
+
+`tiny` and `base` are simply too small for Hindi. `small` recovers the sentence
+("ये एक क्ले का बर्तन है", minor त/द and English-loanword slips) at conf **0.70** —
+comfortably above the 0.55 gate. The confidence heuristic was never the problem.
+
+**Fixes (approved):**
+- `config/config.yaml`: `models.transcribe.on_device` `whisper-tiny-q` → **`whisper-small`**
+  (~465 MB first-run download; server path was already `whisper-small`).
+- `pipelines/voice/transcribe.py` `_transcribe_fw`: `vad_filter=False` (Silero VAD clipped
+  speech on short notes and added a one-time model download) + `condition_on_previous_text=False`
+  (cleaner on single-utterance notes).
+
+**Verify:** `python -m scripts.stt_probe <real_note.m4a> hi` — `small` rows correct, conf > 0.6.
+`python -m pipelines.voice.transcribe <real_note.m4a> hi` — non-garbled Devanagari,
+`needs_rerecord=False`. Steady-state ~2.6s for a 6.5s note on the Air.
+
+**Notes / gotchas:** minor residual errors (बर्तन→बर्दन, code-switched English words) are
+acceptable — Gemini reads them fine. Optional later: `initial_prompt` seeded with craft vocab.
+Re-test bn/ta/mr before Day 7. `day2_smoke` still uses synthetic `say` audio so its conf stays
+low there — that's the test input, not the pipeline.
+**Commit:** pending
+
 ## 2026-09-01 — Voice → listing, step 2: translation = passthrough (Gemini does MT)   [Day 2]
 **Done:** `pipelines/voice/translate.py` — `translate(text, source_lang)` → `TranslationResult`
 (`text`, `source_text`, `source_lang`, `translated` bool, `backend`, `model`, `error`). Contract

@@ -24,10 +24,10 @@ Roadmap: [`planning/KaarigarAI_9Day_Roadmap.md`](planning/KaarigarAI_9Day_Roadma
 - [ ] Extras deferred (build if time): blur/shake at capture, synthetic shadow, perspective de-skew, angle coach
 
 ## Day 2 — Voice → listing   · (mandated 2)
-- [ ] ⚠️ **FIX: voice recognition quality** — `tiny` + synthetic audio decodes garbled
-      (conf 0.35). Test on real human voice notes per language; if still < 0.55, bump
-      `config.yaml` `models.transcribe.on_device` → `whisper-base`, and/or build the
-      whisper.cpp server. Gate can't pass on current quality. (see logs.md, watchlist)
+- [x] ✅ **FIX: voice recognition quality** — was `tiny` (garbled, conf 0.25). `stt_probe.py`
+      proved `tiny`/`base` unusable for Hindi, `small` correct at conf 0.70. Set
+      `on_device: whisper-small`; `vad_filter=False` + `condition_on_previous_text=False`.
+      Verified on a real Hindi note. Re-test bn/ta/mr before Day 7.
 - [x] whisper.cpp transcription (server + on-device fallback) — `pipelines/voice/transcribe.py`
       server (`KAARIGAR_WHISPER_SERVER`) → faster-whisper int8 fallback, confidence +
       `needs_rerecord`. Smoke `scripts/day2_smoke.py` **ran on the Air 1 Sep**: `tiny` model
@@ -39,7 +39,13 @@ Roadmap: [`planning/KaarigarAI_9Day_Roadmap.md`](planning/KaarigarAI_9Day_Roadma
       contract); **Gemini does the real MT in step 3.** IndicTrans2/torch/transformers cut after
       `import transformers` hung ~20 min on the conda-based venv (D11 revised, watchlist).
       Optional real path behind `KAARIGAR_MT=indictrans2`. Tests + smoke green, instant.
-- [ ] Gemini bilingual description — **also does regional→EN+HI translation now** (D11)
+- [!] Gemini bilingual description — `pipelines/voice/describe.py`. `describe(transcript, lang,
+      attributes)` → `ListingDraft` (title/description/bullets EN+HI, seo_keywords, category,
+      materials, source). Gemini over **REST** (`requests`, no SDK — D12), also does translation
+      (D11). Disk cache `data/processed/listing_cache/` = Day-7 pre-cache path. Offline template
+      fallback. Tests 6/6, chained into `day2_smoke`. **CAVEAT:** the test Gemini key hits 429
+      "prepayment credits depleted" — needs a fresh free-tier AI Studio key; code path verified
+      (REST fires, errors handled, template produced). See logs.md.
 - [ ] Glossary fuzzy-correct · PII strip · low-confidence re-record
 - [ ] Spoken read-back confirmation
 

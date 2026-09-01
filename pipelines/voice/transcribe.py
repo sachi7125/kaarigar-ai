@@ -145,11 +145,14 @@ def _load_fw(size: str):
 
 def _transcribe_fw(audio: Path, lang: str | None, size: str) -> TranscriptResult:
     model = _load_fw(size)
+    # vad_filter off: on short craft notes it clipped speech and gave worse text
+    # (stt_probe, 1 Sep); condition_on_previous_text off: cleaner on one-shot utterances.
     seg_iter, info = model.transcribe(
         str(audio),
         language=_WHISPER_LANG.get(lang) if lang else None,
-        vad_filter=True,
+        vad_filter=False,
         beam_size=5,
+        condition_on_previous_text=False,
     )
     segments: list[Segment] = []
     for s in seg_iter:
