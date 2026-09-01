@@ -1,8 +1,9 @@
-"""Day 2 smoke test — steps 1-3: transcription -> translation -> bilingual listing.
+"""Day 2 smoke test — steps 1-4: transcription -> glossary -> PII strip -> listing.
 
 Round-trips through the shared TTS: synthesise a known Hindi sentence to audio,
-then run it back through `transcribe()`, `translate()` (passthrough, D11), and
-`describe()` (Gemini bilingual listing, or offline template if no API key).
+then run it back through `transcribe()`, `glossary.correct()`, `pii_strip()`,
+`translate()` (passthrough, D11), and `describe()` (Gemini bilingual listing, or
+the offline template if no API key).
 Proves the pipeline end to end without needing a real recording or a server.
 
 Run:  python -m scripts.day2_smoke
@@ -17,6 +18,8 @@ from pipelines.voice import tts
 from pipelines.voice.transcribe import transcribe
 from pipelines.voice.translate import translate
 from pipelines.voice.describe import describe
+from pipelines.voice.glossary import correct as glossary_correct
+from pipelines.voice.pii_strip import strip_pii
 
 OUT = Path("results/day2")
 OUT.mkdir(parents=True, exist_ok=True)
@@ -41,13 +44,23 @@ def main() -> int:
         print(f"[stt] note: {r.error}")
     print(f"[stt] text: {r.text!r}")
 
-    tr = translate(r.text or SENTENCE, r.language or "hi")
+    g = glossary_correct(r.text or SENTENCE)
+    print(f"\n[gloss] {len(g.corrections)} correction(s)")
+    for c in g.corrections:
+        print(f"[gloss]   {c.original!r} -> {c.corrected!r} ({c.how})")
+    p = strip_pii(g.text)
+    if p.changed:
+        for red in p.redactions:
+            print(f"[pii] removed {red.kind}: {red.original!r}")
+    print(f"[pii] clean: {p.text!r}")
+
+    tr = translate(p.text or SENTENCE, r.language or "hi")
     print(f"\n[mt] backend={tr.backend} model={tr.model or '-'} translated={tr.translated}")
     if tr.error:
         print(f"[mt] note: {tr.error}")
     print(f"[mt] english: {tr.text!r}")
 
-    d = describe(r.text or SENTENCE, lang=r.language or "hi",
+    d = describe(p.text or SENTENCE, lang=r.language or "hi",
                  attributes={"category": "clay pottery", "materials": ["clay"]})
     print(f"\n[desc] source={d.source}")
     if d.error:

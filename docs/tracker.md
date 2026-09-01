@@ -45,7 +45,19 @@ Roadmap: [`planning/KaarigarAI_9Day_Roadmap.md`](planning/KaarigarAI_9Day_Roadma
       (D11). Disk cache `data/processed/listing_cache/` = Day-7 pre-cache path. Offline template
       fallback. Tests 16/16. **Verified with a real Gemini call** on a fresh free-tier key
       (billing-free project): correct EN+HI listing, fixed a transcription typo, used attributes.
-- [ ] Glossary fuzzy-correct · PII strip · low-confidence re-record
+- [x] Glossary fuzzy-correct · PII strip · low-confidence re-record
+      `glossary.py` — `correct(text)` snaps misheard craft/material words to canonical
+      spellings from `data/reference/craft_glossary.csv` (exact-variant then `difflib` fuzzy,
+      stdlib only). Devanagari-safe tokeniser; script never switches. Fixes the real
+      `बर्दन`→`बर्तन` from the test recording.
+      `pii_strip.py` — removes `+91`/10-digit/12-digit/>=7-digit runs (Latin + Devanagari
+      digits); KEEPS prices, dimensions, counts, years. Returns redaction list.
+      `capture.py` — `capture(audio, lang, recorder, max_retries)` re-record loop: speaks a
+      per-language "say it again" prompt via Day-1 TTS, retries via an injected `recorder`
+      callable (no mic code here), keeps the BEST take not the last. Config
+      `models.transcribe.max_rerecords` (2).
+      Tests 24/24 (`test_glossary`, `test_pii_strip`, `test_capture`). Wired into `day2_smoke`
+      in order transcribe -> glossary -> pii -> describe.
 - [ ] Spoken read-back confirmation
 
 ## Day 3 — Flutter shell + offline queue   · GATE

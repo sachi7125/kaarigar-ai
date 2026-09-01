@@ -13,6 +13,7 @@ models:
                                 # tiny/base are unusable for Hindi (garbled, conf ~0.25);
                                 # small gets it right at conf ~0.70 — see stt_probe / build_log 1 Sep.
     min_confidence: 0.55        # below -> ask for a re-record
+    max_rerecords: 2            # spoken re-record attempts before we accept the best take
   translate: passthrough           # no standalone MT model (D11); Gemini does EN+HI
   describe:  gemini-free            # -> gemini-3.6-flash over REST (needs a free-tier key; else template)
   tts:       offline-voice       # shared: read-back, onboarding, alerts, nudges

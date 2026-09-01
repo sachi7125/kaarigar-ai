@@ -63,6 +63,16 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
       (garbled, conf ~0.25); moved `on_device` to `whisper-small` (conf 0.70 on a real note) +
       `vad_filter=False` + `condition_on_previous_text=False`. Diagnostic: `scripts/stt_probe.py`.
       Still to do: re-test bn/ta/mr before Day 7; `small` is ~465 MB (pre-cache for the demo).
+- [ ] **Glossary is only as good as its rows.** `data/reference/craft_glossary.csv` currently
+      covers ~55 techniques/materials/objects. Every new real recording that surfaces a mishear
+      should add a row — this is the cheapest quality win in the voice pipeline, because the words
+      whisper mangles are the words buyers search for. Devanagari and Latin must stay on separate
+      rows (a correction must never switch script).
+- [ ] **PII strip must not eat prices.** Threshold is ≥7 digits; prices/dimensions/counts/years
+      stay. If the demo ever shows a missing price, check `pii_strip` first. Tested both ways.
+- [ ] **The re-record loop needs a real `recorder` on device.** `capture()` deliberately owns no
+      microphone (D14) — Flutter must supply the callable, play `prompt_audio`, and re-record.
+      Until Day 3 wires that, the loop only returns the prompt for the caller to drive.
 - [ ] **Confidence gate is heuristic** (`exp(avg_logprob)` × `1-no_speech_prob`, threshold 0.55).
       Tune the threshold against real regional-language notes so it re-records genuine mishears
       without nagging on clean audio.

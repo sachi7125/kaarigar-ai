@@ -7,8 +7,41 @@ and anything the next person needs to know.
 Say **"update logs.md"** to append a new entry.
 
 The deep detail lives in `docs/build_log.md` (narrative), `docs/tracker.md` (task status),
-`docs/watchlist.md` (risks/gotchas), `docs/decisions.md` (locked choices D1–D11).
+`docs/watchlist.md` (risks/gotchas), `docs/decisions.md` (locked choices D1–D14).
 This file is the quick "where are we / what next".
+
+---
+
+## 2026-09-01 — Claude session — Day 2 step 4: glossary · PII strip · re-record loop
+
+**Done**
+- `pipelines/voice/glossary.py` + `data/reference/craft_glossary.csv` (~55 rows) — fuzzy-corrects
+  misheard craft/material words. Fixes the exact error from the real recording:
+  `बर्दन`→`बर्तन`, `मिटटी`→`मिट्टी`, `मटकि`→`मटकी`, `साडी`→`साड़ी`, `dokra`→`dhokra`,
+  `bandani`→`bandhani`. stdlib `difflib`, no new dependency (D14).
+  *Bug caught in verification:* Python's `\w` drops Devanagari matras/virama, which shredded
+  `मिट्टी` — tokeniser now spells out the `\u0900-\u097F` block.
+- `pipelines/voice/pii_strip.py` — strips `+91`/10-digit/12-digit/≥7-digit runs (Latin +
+  Devanagari digits) before publish; **keeps** prices, dimensions, counts, years.
+- `pipelines/voice/capture.py` — low-confidence re-record loop. Speaks a per-language
+  "say it again" prompt via the Day-1 TTS, retries through an **injected** `recorder` callable
+  (no mic code in the pipeline — D14), keeps the **best** take not the last.
+  Budget: `models.transcribe.max_rerecords` (2).
+- Pipeline order wired in `day2_smoke`: transcribe → glossary → PII strip → describe.
+- Tests: 40 passing across `pipelines/voice/`.
+- Docs: tracker, build_log, watchlist, decisions (**D14**).
+
+**Next task (priority order)**
+1. Day 2 step 5 — **spoken read-back confirmation** (reuse `tts.py`). Nothing publishes without
+   it. Should read back the EN/HI title + description, mention any glossary correction and any
+   PII redaction out loud, and take a voice confirm. This closes the Day-2 exit gate.
+2. Re-test transcription + the full chain on **Bengali / Tamil / Marathi** notes (O3).
+3. Populate `data/processed/listing_cache/` with the demo items (Day-7 pre-cache).
+
+**Notes for whoever's next**
+- `python -m pipelines.voice.capture <audio> hi` loads whisper `small` — takes ~2-3 min on this
+  machine (iCloud-synced `~/Desktop`), that is not a hang.
+- Add a glossary row every time a real recording surfaces a new mishear — cheapest quality win.
 
 ---
 

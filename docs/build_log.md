@@ -15,6 +15,57 @@ Format:
 
 ---
 
+## 2026-09-01 — Voice → listing, step 4: glossary · PII strip · re-record loop   [Day 2]
+**Done:** the three guardrails that stand between a raw transcript and a published listing.
+
+**`pipelines/voice/glossary.py`** — `correct(text, min_ratio=0.82)` → `GlossaryResult(text,
+corrections[])`. Snaps misheard craft/material words to canonical spellings. Data:
+`data/reference/craft_glossary.csv` (`canonical,variants`, pipe-separated; ~55 rows covering
+techniques — ikat/bandhani/dhokra/kalamkari/ajrakh… — materials, and craft objects, in Latin
+**and** Devanagari as separate rows so a correction never switches script). Per token: exact
+variant hit → canonical, else `difflib.get_close_matches` above the ratio. stdlib only, no
+fuzzy-match dependency (D14).
+- **Bug found + fixed in verification:** Python's `\w` excludes Devanagari matras and the virama
+  (they are `Mn` marks), so the first tokeniser shredded `मिट्टी` into `म` + `िट` + … and
+  `str.isalnum()` returned False for any token containing a virama. Token class now spells out
+  `\u0900-\u097F` and the "is this a word" guard is a regex, not `isalnum()`.
+- Verified on the real recording: `बर्दन` → `बर्तन`, `मिटटी` → `मिट्टी`, `मटकि` → `मटकी`,
+  `साडी` → `साड़ी`; `dokra`→`dhokra`, `bandani`→`bandhani`, `dupata`→`dupatta`.
+
+**`pipelines/voice/pii_strip.py`** — `strip_pii(text, min_digits=7, placeholder="[removed]")`
+→ `PIIResult(text, redactions[], changed)`. Removes `+91`/`0091` numbers with any spacing, and
+any digit run ≥ 7 counted across spaces/dashes (covers 10-digit mobile, 12-digit Aadhaar), in
+Latin **and** Devanagari digits. **Keeps** prices, dimensions, counts and years — pricing and
+stock depend on those surviving. Returns what was removed so the read-back can say so out loud
+rather than silently altering her words.
+
+**`pipelines/voice/capture.py`** — `capture(audio, lang, recorder, max_retries)` →
+`CaptureResult(transcript, attempts, still_low, prompt_audio, audio_used, history)`. Acts on
+`needs_rerecord`: synthesises a per-language "आवाज़ साफ़ नहीं आई, दोबारा बोलिए" prompt with the
+Day-1 TTS, then calls an **injected** `recorder(prompt_audio, attempt)` callable for the new
+audio. **No microphone code lives here** (D14) — the same loop runs from Flutter, a CLI, and the
+tests. Keeps the **best** take, not the last, because a retry can come out worse. Retry budget:
+`models.transcribe.max_rerecords` (2).
+
+**Pipeline order is now:** transcribe → glossary → PII strip → describe. `scripts/day2_smoke.py`
+runs it in that order and prints `[gloss]` / `[pii]` lines.
+
+**How to run / verify:**
+```
+source .venv/bin/activate
+python -m pipelines.voice.glossary "ye ek dokra murti aur ek bandani dupata"
+python -m pipelines.voice.glossary "ये एक क्ले का बर्दन है, मिटटी की मटकि"
+python -m pipelines.voice.pii_strip "400 rupaye ki hai, call karo +91 98765 43210 par"
+python -m pipelines.voice.capture clay-bartan.m4a hi
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest pipelines/voice/ -q     # 40 passed
+```
+
+**Notes / gotchas:** the glossary is the cheapest quality win in the whole voice pipeline — the
+words whisper mangles are exactly the words buyers search for. Add a row whenever a real
+recording surfaces a new mishear. `glossary.terms()` also exposes the canonical list, which is
+the obvious future `initial_prompt` bias for whisper.
+**Commit:** pending
+
 ## 2026-09-01 — Voice → listing, step 3: Gemini bilingual description   [Day 2]
 **Done:** `pipelines/voice/describe.py` — `describe(transcript, lang="hi", attributes=None)`
 → `ListingDraft` (`title_en/hi`, `description_en/hi`, `bullets_en/hi`, `seo_keywords`,

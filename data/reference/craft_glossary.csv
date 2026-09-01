@@ -1,0 +1,58 @@
+# KaarigarAI craft-vocabulary glossary (Day 2, step 4).
+# Used by pipelines/voice/glossary.py to fuzzy-correct misheard words in a transcript.
+# canonical = the spelling we publish. variants = pipe-separated known mishearings/spellings.
+# Keep Devanagari and Latin as SEPARATE rows so a correction never switches script.
+canonical,variants
+# --- craft techniques / styles (Latin) ---
+ikat,ikkat|ekat|eekat|ikaat
+bandhani,bandani|bandhni|bandhanee|bandej
+dhokra,dokra|dhokara|dokhra|dhorka
+kalamkari,kalamkaari|kalankari|qalamkari
+madhubani,madhubaani|madhuvani|mithila
+warli,varli|waarli
+phulkari,fulkari|phoolkari|phulkaari
+chikankari,chikankaari|chikan kari|chikenkari
+pattachitra,patachitra|pattchitra|patta chitra
+ajrakh,ajrak|azrakh|ajarakh
+meenakari,minakari|meenakaari
+kantha,kanta|khantha
+pashmina,pashmeena|pasmina
+terracotta,terakota|teracotta|terra cotta
+blue pottery,blu pottery|blue potery
+zardozi,zardosi|jardozi
+banarasi,banarsi|benarasi|banaarasi
+chanderi,chandery|chanderee
+kanjivaram,kanjeevaram|kancheepuram|kanchipuram
+tussar,tusar|tussah|tasar
+# --- materials (Latin) ---
+clay,clai|klay|claye
+brass,bras|braas
+copper,coper|kopper
+bamboo,bambu|bamboo wood|banboo
+cotton,coton|kotton
+silk,silck|shilk
+jute,joot|jhute
+wool,wul|wull
+terracotta clay,terakota clay
+sandalwood,chandan wood|sandal wood
+# --- craft objects (Latin) ---
+bartan,bardan|barthan|bartaan
+matki,mataki|matkee|matka
+diya,diyaa|deeya|diva
+dupatta,dupata|duppatta
+saree,sari|saaree|sadi
+patila,pateela|patheela|pateela
+# --- Devanagari: objects & materials ---
+बर्तन,बर्दन|बरतन|बर्थन|बरदन
+मटकी,मटकि|मटकी़|मटकीं
+दीया,दिया|दीय|दिय
+मिट्टी,मिटटी|मिट्टि|मिटी
+पीतल,पितल|पीतळ
+तांबा,तामबा|ताँबा|तांबॉ
+बांस,बाँस|बंबू|बांश
+सूती,सुती|सूति
+रेशम,रेशम्|रेषम
+साड़ी,साडी|सारी|साड़ि
+दुपट्टा,दुपटा|दुप्पट्टा
+पतीला,पतिला|पतीले|पटीला
+हस्तनिर्मित,हस्तनिर्मीत|हसतनिर्मित
