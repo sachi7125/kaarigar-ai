@@ -15,6 +15,30 @@ Format:
 
 ---
 
+## 2026-09-01 — Perf fix: drop rembg, run u2netp via onnxruntime   [Day 1 hardening]
+**Problem:** on the target MacBook Air (arm64, native — not Rosetta), the pipeline crawled/hung:
+`import cv2` took **25 s** (OpenCV **5.0.0** beta had a bad arm64 build), and `import rembg`
+stalled for minutes JIT-compiling **pymatting → numba** at import. Separately, `pip install`
+froze indefinitely at 0% CPU — pip hanging on the **macOS Keychain (keyring)** lookup.
+
+**Fixes:**
+- **Background removal now runs u2netp directly through onnxruntime** (`pipelines/image/enhance.py`),
+  no rembg wrapper — onnxruntime imports in ~0.1 s and u2netp is ~4.7 MB (auto-downloaded to
+  `~/.cache/kaarigar/u2netp.onnx`). GrabCut stays as the offline fallback; `KAARIGAR_NO_REMBG=1`
+  forces it. Mask is computed at ≤720px then upscaled (speed). `rembg_available()` →
+  `bg_model_available()`.
+- **Pinned OpenCV to `opencv-python-headless==4.10.0.84`** (imports in ~1 s vs 25 s).
+- **Disabled pip's keyring globally:** `pip config set global.keyring-provider disabled` — this was
+  the real cause of the multi-minute `pip install` freezes; it will bite every future install.
+
+**Verify:** `python -m scripts.day1_smoke` (fast, `u2netp available: True`, `Day 1 gate: PASS`);
+`python -m scripts.try_photo saree.jpeg` → clean cut-out on a real photo.
+
+**Notes:** rembg/pymatting/numba are left installed but never imported (harmless); requirements.txt
+updated to drop rembg and pin opencv. See decisions D9.
+
+**Commit:** pending
+
 ## 2026-08-30 — Image pipeline + shared TTS   [Day 1]  ✅ gate passed
 **Done:**
 - `pipelines/image/enhance.py` — full enhancer: rembg U2-Net background removal (GrabCut

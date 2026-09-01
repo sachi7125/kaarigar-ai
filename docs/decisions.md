@@ -13,6 +13,7 @@ Add a row when a real choice is made. `D#` ids are stable; reference them in com
 | D6 | **Report-an-issue logs only** — no adjudication, refund, or delist. | Full dispute resolution needs the settlement machinery kept out of scope; a logged, two-sided record is the honest prototype version. | 30 Aug |
 | D7 | **Failure-aware image check = mask sanity, not subject contrast.** Retake when coverage is degenerate or the cut-out is fragmented (largest blob < 0.55). | Gating on the subject's internal contrast wrongly rejected legitimately flat-coloured products (a plain pot, a solid dupatta). The real failure is a bad *cut-out*, which shows up in the mask. | 30 Aug (Day 1) |
 | D8 | **White balance is scene-based Shades-of-Gray with clamped gains**, not gray-world over the subject. | Gray-world over the subject neutralises a strongly single-coloured product — a blue pot came out grey. Estimating the illuminant from the whole frame corrects the cast while keeping the product's colour. | 30 Aug (Day 1) |
+| D9 | **Background removal runs u2netp directly via onnxruntime; the `rembg` wrapper is dropped.** OpenCV pinned to 4.10.x; pip keyring disabled. | rembg imports pymatting+numba whose JIT stalls for minutes on the dev machine; onnxruntime imports in ~0.1s. OpenCV 5.0.0 (beta) imported in 25s; 4.10 in ~1s. pip froze on the macOS Keychain until keyring was disabled. All verified on the target MacBook Air (arm64). | 1 Sep (Day 1) |
 
 ## Open decisions
 

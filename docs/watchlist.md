@@ -7,6 +7,19 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
 
 ---
 
+## Environment (macOS arm64 dev machine) — learned the hard way 1 Sep
+
+- [x] **pip hangs on the macOS Keychain (keyring).** Symptom: `pip install` sits at 0% CPU with
+      no output for many minutes. Fixed globally with `pip config set global.keyring-provider
+      disabled`. If it recurs on another machine: prefix installs with
+      `PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`.
+- [x] **Do NOT let OpenCV resolve to 5.0.0** (beta) — it imports in ~25 s on arm64. Pinned to
+      `opencv-python-headless==4.10.0.84`.
+- [x] **Do NOT import rembg** — it pulls pymatting+numba whose import-time JIT stalls for minutes.
+      We run u2netp via onnxruntime directly instead. Keep it that way for any new bg work.
+- [ ] **Heavy models are slow on the Air's CPU** — expected. Mask at ≤720px; on device / for the
+      demo, plan server-side processing and pre-cached responses (Day 7).
+
 ## Cross-cutting (any day)
 
 - [ ] **Free-tier caps + demo-day internet.** Gemini and other free tiers carry daily request

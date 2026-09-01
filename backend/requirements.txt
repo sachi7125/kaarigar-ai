@@ -9,9 +9,9 @@ jinja2>=3.1            # public storefront / listing page rendering
 requests>=2.31
 
 # --- AI pipelines ---
-rembg>=2.0             # U2-Net background removal
-onnxruntime>=1.17      # rembg inference backend
-opencv-python>=4.9
+onnxruntime>=1.17      # runs u2netp for background removal directly (no rembg wrapper:
+                       #   rembg drags in pymatting+numba whose JIT stalls for minutes)
+opencv-python-headless==4.10.0.84   # PIN to 4.x: 5.0.0 imports in ~25s on arm64
 pillow>=10.3
 faster-whisper>=1.0   # whisper.cpp-style inference (transcription)
 google-generativeai>=0.7   # Gemini free tier (description)

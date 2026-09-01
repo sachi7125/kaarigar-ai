@@ -17,6 +17,8 @@ models:
 
 image:
   bg_removal: rembg-u2net
+  bg_model: u2netp                # lightweight U2-Net (~4MB): fast on CPU/phones; use "u2net" for max quality
+  mask_max_side: 720             # compute the cut-out mask at this size, then upscale (speed)
   target_ratios: [1.0, 1.33]     # e-commerce crops
   min_subject_component_frac: 0.55  # smaller largest-blob -> fragmented cut-out -> retake
   texture_closeup: true

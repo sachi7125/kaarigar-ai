@@ -25,44 +25,69 @@ import numpy as np
 
 from pipelines.common import cfg_get
 
-# ---- rembg (U2-Net) is LAZY: imported only on first use, never at module load. ----
-# Importing rembg pulls in the whole onnxruntime stack, which can be slow/blocking on a
-# cold disk. Keeping it lazy means `import enhance` is instant, GrabCut runs without ever
-# touching onnxruntime, and setting KAARIGAR_NO_REMBG=1 skips rembg entirely.
+# ---- Background removal = U2-Net (u2netp) run DIRECTLY through onnxruntime. ----
+# We deliberately do NOT use the `rembg` wrapper: it imports pymatting + numba, whose
+# import-time JIT compilation stalls for minutes on first run. onnxruntime imports in
+# ~0.1s and u2netp is ~4.7 MB. The session loads lazily on first use; set
+# KAARIGAR_NO_REMBG=1 to force the GrabCut fallback and skip the model entirely.
 import os
+import urllib.request
 
-_REMBG_REMOVE = None
-_REMBG_SESSION = None
-_REMBG_TRIED = False
+_U2NETP_URL = "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx"
+_MODEL_DIR = Path(os.path.expanduser("~/.cache/kaarigar"))
+_MODEL_PATH = _MODEL_DIR / "u2netp.onnx"
+
+_SESSION = None
+_INPUT_NAME = None
+_SESSION_TRIED = False
+
+_MEAN = np.array([0.485, 0.456, 0.406], np.float32)
+_STD = np.array([0.229, 0.224, 0.225], np.float32)
 
 
-def _load_rembg() -> bool:
-    """Import rembg and build a session on first call. Returns True if usable."""
-    global _REMBG_REMOVE, _REMBG_SESSION, _REMBG_TRIED
-    if _REMBG_TRIED:
-        return _REMBG_REMOVE is not None
-    _REMBG_TRIED = True
+def _ensure_model() -> Path:
+    if not _MODEL_PATH.exists():
+        _MODEL_DIR.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(_U2NETP_URL, _MODEL_PATH)
+    return _MODEL_PATH
+
+
+def _load_u2net() -> bool:
+    """Build the onnxruntime session on first call. Returns True if usable."""
+    global _SESSION, _INPUT_NAME, _SESSION_TRIED
+    if _SESSION_TRIED:
+        return _SESSION is not None
+    _SESSION_TRIED = True
     if os.environ.get("KAARIGAR_NO_REMBG") == "1":
         return False
     try:
-        from rembg import remove, new_session
-        _REMBG_REMOVE = remove
-        _REMBG_SESSION = new_session("u2net")
+        import onnxruntime as ort
+        sess = ort.InferenceSession(str(_ensure_model()),
+                                    providers=["CPUExecutionProvider"])
+        _SESSION = sess
+        _INPUT_NAME = sess.get_inputs()[0].name
         return True
     except Exception:  # pragma: no cover
-        _REMBG_REMOVE = None
+        _SESSION = None
         return False
 
 
-def rembg_available() -> bool:
-    """Whether rembg loaded (triggers the lazy import on first call)."""
-    return _load_rembg()
+def bg_model_available() -> bool:
+    """Whether the U2-Net onnx model is usable (triggers lazy load on first call)."""
+    return _load_u2net()
 
 
-def _rembg_alpha(bgr: np.ndarray) -> np.ndarray:
+def _u2net_alpha(bgr: np.ndarray) -> np.ndarray:
+    """8-bit subject mask via u2netp: resize->normalise->infer->rescale mask to frame."""
+    h, w = bgr.shape[:2]
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-    rgba = _REMBG_REMOVE(rgb, session=_REMBG_SESSION)  # HxWx4 RGBA
-    return rgba[:, :, 3]
+    x = cv2.resize(rgb, (320, 320)).astype(np.float32) / 255.0
+    x = (x - _MEAN) / _STD
+    x = np.transpose(x, (2, 0, 1))[None].astype(np.float32)  # (1,3,320,320)
+    out = _SESSION.run(None, {_INPUT_NAME: x})[0]            # (1,1,320,320)
+    m = out[0, 0]
+    m = (m - m.min()) / (m.max() - m.min() + 1e-8)
+    return cv2.resize((m * 255).astype(np.uint8), (w, h), interpolation=cv2.INTER_LINEAR)
 
 
 TARGET_SIZE = 1000  # px, square e-commerce output
@@ -98,10 +123,27 @@ def _grabcut_alpha(bgr: np.ndarray) -> np.ndarray:
     return alpha
 
 
-def _subject_alpha(bgr: np.ndarray) -> tuple[np.ndarray, str]:
-    if _load_rembg():
-        return _rembg_alpha(bgr), "rembg"
-    return _grabcut_alpha(bgr), "grabcut"
+def _subject_alpha(bgr: np.ndarray, mask_max_side: int = 720) -> tuple[np.ndarray, str]:
+    """Compute the subject mask on a downscaled copy (fast), then upscale the alpha
+    back to full resolution. Masking at ~720px is many times faster than full-res and
+    the mask is smooth enough to upsample without visible loss."""
+    h, w = bgr.shape[:2]
+    scale = min(1.0, mask_max_side / max(h, w))
+    small = cv2.resize(bgr, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA) \
+        if scale < 1.0 else bgr
+
+    if _load_u2net():
+        alpha_small = _u2net_alpha(small)
+        method = "u2netp"
+    else:
+        alpha_small = _grabcut_alpha(small)
+        method = "grabcut"
+
+    if scale < 1.0:
+        alpha = cv2.resize(alpha_small, (w, h), interpolation=cv2.INTER_LINEAR)
+    else:
+        alpha = alpha_small
+    return alpha, method
 
 
 def cutout_metrics(alpha: np.ndarray) -> tuple[float, float]:
