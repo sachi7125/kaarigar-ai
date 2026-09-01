@@ -11,7 +11,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from pipelines.image.enhance import enhance, HAVE_REMBG
+from pipelines.image.enhance import enhance, rembg_available
 from pipelines.voice import tts
 
 OUT = Path("results/day1")
@@ -43,7 +43,7 @@ def _make_bad_photo(path: Path) -> None:
 def main() -> int:
     raw = OUT / "raw_input.png"
     _make_bad_photo(raw)
-    print(f"[image] rembg available: {HAVE_REMBG}")
+    print(f"[image] rembg available: {rembg_available()}")
 
     res = enhance(str(raw), str(OUT))
     print(f"[image] status={res.status} method={res.method} "

@@ -25,24 +25,44 @@ import numpy as np
 
 from pipelines.common import cfg_get
 
-# ---- optional rembg (U2-Net). Falls back to GrabCut so the pipeline runs offline. ----
-try:
-    from rembg import remove as _rembg_remove, new_session as _rembg_new_session
+# ---- rembg (U2-Net) is LAZY: imported only on first use, never at module load. ----
+# Importing rembg pulls in the whole onnxruntime stack, which can be slow/blocking on a
+# cold disk. Keeping it lazy means `import enhance` is instant, GrabCut runs without ever
+# touching onnxruntime, and setting KAARIGAR_NO_REMBG=1 skips rembg entirely.
+import os
 
-    _REMBG_SESSION = None
+_REMBG_REMOVE = None
+_REMBG_SESSION = None
+_REMBG_TRIED = False
 
-    def _rembg_alpha(bgr: np.ndarray) -> np.ndarray:
-        """Return an 8-bit alpha mask from rembg (U2-Net)."""
-        global _REMBG_SESSION
-        if _REMBG_SESSION is None:
-            _REMBG_SESSION = _rembg_new_session("u2net")
-        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-        rgba = _rembg_remove(rgb, session=_REMBG_SESSION)  # HxWx4 RGBA
-        return rgba[:, :, 3]
 
-    HAVE_REMBG = True
-except Exception:  # pragma: no cover - environment without rembg
-    HAVE_REMBG = False
+def _load_rembg() -> bool:
+    """Import rembg and build a session on first call. Returns True if usable."""
+    global _REMBG_REMOVE, _REMBG_SESSION, _REMBG_TRIED
+    if _REMBG_TRIED:
+        return _REMBG_REMOVE is not None
+    _REMBG_TRIED = True
+    if os.environ.get("KAARIGAR_NO_REMBG") == "1":
+        return False
+    try:
+        from rembg import remove, new_session
+        _REMBG_REMOVE = remove
+        _REMBG_SESSION = new_session("u2net")
+        return True
+    except Exception:  # pragma: no cover
+        _REMBG_REMOVE = None
+        return False
+
+
+def rembg_available() -> bool:
+    """Whether rembg loaded (triggers the lazy import on first call)."""
+    return _load_rembg()
+
+
+def _rembg_alpha(bgr: np.ndarray) -> np.ndarray:
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    rgba = _REMBG_REMOVE(rgb, session=_REMBG_SESSION)  # HxWx4 RGBA
+    return rgba[:, :, 3]
 
 
 TARGET_SIZE = 1000  # px, square e-commerce output
@@ -79,7 +99,7 @@ def _grabcut_alpha(bgr: np.ndarray) -> np.ndarray:
 
 
 def _subject_alpha(bgr: np.ndarray) -> tuple[np.ndarray, str]:
-    if HAVE_REMBG:
+    if _load_rembg():
         return _rembg_alpha(bgr), "rembg"
     return _grabcut_alpha(bgr), "grabcut"
 
