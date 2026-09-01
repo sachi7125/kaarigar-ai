@@ -46,12 +46,15 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest pipelines/voice/ -q   # 16 pas
 python -m scripts.day2_smoke                                       # step-3 line: OK
 ```
 
-**Notes / gotchas — Gemini key:** the test key returns **HTTP 429 "prepayment credits are
-depleted"** on every current model; older models (`gemini-2.5-flash`) return 404 "not available
-to new users". The project is on prepay billing with no free tier. **Fix is account-side:** new
-AI Studio project → new key → free tier applies. Code path is fully verified (REST call fires,
-429/404 handled, template fallback produces a listing). `gemini-generativeai` deprecation +
-fast-churning free-tier model names are why the model id is config-driven.
+**Verified 1 Sep:** `python -m pipelines.voice.describe "ये एक क्ले का बर्दन है, हाथ से बनी, कीमत चार सौ रुपये" hi`
+→ `source=gemini`, model `gemini-3.6-flash`. Correct EN + HI listing, corrected the transcript
+typo (बर्दन→बर्तन), pulled "400 rupees", used the passed attributes.
+
+**Gemini key gotcha:** the free tier only works on a Google Cloud project with **no billing
+account**. A key made in a billing-enabled project (e.g. one already used for Maps free-trial
+credit) returns 429 "prepayment credits are depleted" once the trial credit is gone. Fix: make
+the Gemini key in a *new* AI Studio project. Model names churn fast (`1.5`→404, `2.5`→"not for
+new users", `3.6-flash` current) → `models.describe` in config is the one place to change it.
 **Commit:** pending
 
 ## 2026-09-01 — Voice recognition fix: whisper-small, VAD off   [Day 2 hardening]

@@ -72,11 +72,11 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
       the actual regional→EN+HI translation.** Verify Gemini output quality per language against a
       real note. Offline, the listing text stays in the source language — acceptable degradation,
       but note it in the demo script.
-- [!] **Gemini carries translation + description** — single point of failure, subject to free-tier
-      caps. Template fallback (`describe.py`) + disk cache built. **OPEN: the current API key hits
-      429 "prepayment credits depleted"** — need a fresh free-tier AI Studio key before the gate
-      can show real Gemini output. Pre-cache every demo item Day 7 (the `listing_cache/` dir is the
-      mechanism — populate it online, it replays offline).
+- [x] **Gemini carries translation + description** — single point of failure, subject to free-tier
+      caps. Template fallback (`describe.py`) + disk cache built; real Gemini call verified 1 Sep on
+      a billing-free AI Studio project (a billing-enabled project 429s once trial credit is gone).
+      Still to do: pre-cache every demo item Day 7 (populate `listing_cache/` online → replays
+      offline); tune the prompt against more real transcripts.
 - [!] **Never install `google-generativeai`** (or `google-api-python-client`, `grpcio`) — SDK is
       deprecated, imports in ~156 s, and its dep tree re-broke pytest. Gemini is REST via `requests`.
 - [ ] **Free-tier Gemini model names churn** — `1.5-flash` gone, `2.5-flash` "not for new users",

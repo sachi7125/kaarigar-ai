@@ -25,21 +25,17 @@ This file is the quick "where are we / what next".
 - `common.py`: `load_env()` / `env_get()` for `.env`; added `.env.example`.
 - Tests 16/16 pass. `day2_smoke` extended to step 3.
 
-**NOT working / open issue**
-- ⚠️ **Gemini API key has no quota.** Every current model returns HTTP 429 "prepayment credits
-  are depleted"; older models 404 "not available to new users". The key's project is on prepay
-  billing with no free tier. **Code path is fully verified** (REST fires, errors handled,
-  template fallback works) — this is purely account-side.
-  **Fix:** aistudio.google.com → new project → new API key (free tier auto-applies) → replace
-  in `.env`. If a fresh project still 429s, the account/region has no free Gemini tier.
+**Gemini key — RESOLVED.** The free tier only works on a project with **no billing account**.
+The first key was made in a billing-enabled project (Maps free-trial) → 429 once credit ran
+out. New key from a fresh AI Studio project works. `describe.py` verified: `source=gemini`,
+correct EN+HI listing, model `gemini-3.6-flash`.
 
 **Next task (priority order)**
-1. **Get a working Gemini key** (above) and confirm `describe.py` returns `source=gemini` with
-   a real bilingual listing. Then populate `listing_cache/` with the demo items.
-2. Day 2 step 4 — `glossary.py` (craft-vocab fuzzy-correct) + `pii_strip.py` (identifier-like
-   digit runs) + the low-confidence **re-record loop** (speak prompt via `tts.py`, re-capture,
-   cap retries).
-3. Day 2 step 5 — spoken read-back confirmation (reuse `tts.py`). Nothing publishes without it.
+1. Day 2 step 4 — `glossary.py` (craft-vocab fuzzy-correct, e.g. clay→मिट्टी, ikat/bandhani/
+   dhokra spellings) + `pii_strip.py` (strip identifier-like digit runs before publish) + the
+   low-confidence **re-record loop** (speak prompt via `tts.py`, re-capture, cap retries).
+2. Day 2 step 5 — spoken read-back confirmation (reuse `tts.py`). Nothing publishes without it.
+3. Populate `data/processed/listing_cache/` with the demo items (Day-7 pre-cache).
 
 **Notes for whoever's next**
 - Repo on `~/Desktop` (iCloud-synced) makes every Python import slow (~30 s pytest, ~3 min

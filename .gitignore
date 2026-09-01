@@ -18,7 +18,11 @@ ml/models/*.ubj
 # data (keep reference small + committed; ignore bulky raw)
 data/raw/*
 !data/raw/.gitkeep
-data/processed/listing_cache/     # Gemini listing cache (dev runs); demo pre-cache is curated separately
+# Gemini listing cache (dev runs); demo pre-cache is curated separately
+data/processed/listing_cache/
+
+# local test recordings
+*.m4a
 
 # generated assets
 assets/generated/*

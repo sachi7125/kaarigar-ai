@@ -39,13 +39,12 @@ Roadmap: [`planning/KaarigarAI_9Day_Roadmap.md`](planning/KaarigarAI_9Day_Roadma
       contract); **Gemini does the real MT in step 3.** IndicTrans2/torch/transformers cut after
       `import transformers` hung ~20 min on the conda-based venv (D11 revised, watchlist).
       Optional real path behind `KAARIGAR_MT=indictrans2`. Tests + smoke green, instant.
-- [!] Gemini bilingual description — `pipelines/voice/describe.py`. `describe(transcript, lang,
+- [x] Gemini bilingual description — `pipelines/voice/describe.py`. `describe(transcript, lang,
       attributes)` → `ListingDraft` (title/description/bullets EN+HI, seo_keywords, category,
       materials, source). Gemini over **REST** (`requests`, no SDK — D12), also does translation
       (D11). Disk cache `data/processed/listing_cache/` = Day-7 pre-cache path. Offline template
-      fallback. Tests 6/6, chained into `day2_smoke`. **CAVEAT:** the test Gemini key hits 429
-      "prepayment credits depleted" — needs a fresh free-tier AI Studio key; code path verified
-      (REST fires, errors handled, template produced). See logs.md.
+      fallback. Tests 16/16. **Verified with a real Gemini call** on a fresh free-tier key
+      (billing-free project): correct EN+HI listing, fixed a transcription typo, used attributes.
 - [ ] Glossary fuzzy-correct · PII strip · low-confidence re-record
 - [ ] Spoken read-back confirmation
 
