@@ -24,6 +24,10 @@ Roadmap: [`planning/KaarigarAI_9Day_Roadmap.md`](planning/KaarigarAI_9Day_Roadma
 - [ ] Extras deferred (build if time): blur/shake at capture, synthetic shadow, perspective de-skew, angle coach
 
 ## Day 2 — Voice → listing   · (mandated 2)
+- [ ] ⚠️ **FIX: voice recognition quality** — `tiny` + synthetic audio decodes garbled
+      (conf 0.35). Test on real human voice notes per language; if still < 0.55, bump
+      `config.yaml` `models.transcribe.on_device` → `whisper-base`, and/or build the
+      whisper.cpp server. Gate can't pass on current quality. (see logs.md, watchlist)
 - [x] whisper.cpp transcription (server + on-device fallback) — `pipelines/voice/transcribe.py`
       server (`KAARIGAR_WHISPER_SERVER`) → faster-whisper int8 fallback, confidence +
       `needs_rerecord`. Smoke `scripts/day2_smoke.py` **ran on the Air 1 Sep**: `tiny` model

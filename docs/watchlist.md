@@ -59,6 +59,11 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
 - [ ] **whisper.cpp server is optional and unbuilt.** Code prefers it via `KAARIGAR_WHISPER_SERVER`
       and falls back to on-device on any failure. If we want the server for the demo, build+test it
       before Day 7, not on the day.
+- [!] **Voice recognition quality is currently poor — OPEN, must fix before the gate passes.**
+      Smoke test (`tiny` model + robotic `say` voice) decoded Hindi garbled at conf 0.35. The
+      confidence gate caught it (`needs_rerecord=True`), so bad text won't reach a listing, but the
+      pipeline can't demo like this. Fix path: real-audio eval per language → bump `on_device` to
+      `whisper-base`/`small` → or build the whisper.cpp server. Tracked in `logs.md`.
 - [ ] **Confidence gate is heuristic** (`exp(avg_logprob)` × `1-no_speech_prob`, threshold 0.55).
       Tune the threshold against real regional-language notes so it re-records genuine mishears
       without nagging on clean audio.
