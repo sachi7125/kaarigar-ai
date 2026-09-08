@@ -1,0 +1,78 @@
+# KaarigarAI pricing reference set (Day 4) — comparables + XGBoost training data.
+# category/material/size/region/season -> price_inr. Every row is flagged observed|synthesised
+# per data_sources.md. ALL rows here are "synthesised": hand-compiled within researched,
+# plausible Indian handicraft market ranges for each category (general market knowledge, not
+# scraped from a live listing), NOT pulled from a real GeM/marketplace listing — so the
+# synthetic share is 100% until real observed listings are added. Replace/augment with real
+# GeM public listings or open handicraft marketplace data before relying on this for a demo
+# number that gets quoted aloud. size in {small, medium, large}; season in
+# {wedding, diwali, regular}; region is a broad zone, not a precise state.
+#
+# size_score (added 6 Sep, Day 4 follow-up): the continuous 0-1 vision-coverage
+# number that size_class buckets. Backfilled, not independently measured — within
+# each (category, size) group, rows are ranked by price_inr and spread evenly across
+# that bucket's coverage range (pipelines.pricing.attributes.SIZE_BOUNDS), so the
+# cheapest "medium" clay pot gets the lowest medium-range score and the priciest
+# gets the highest. This assumes price varies with size within a bucket, which is
+# usually true but not always — season/region can also move the price of two
+# same-sized items — so treat size_score as a soft, price-informed proxy, not a
+# real per-row measurement. Single-row buckets get the bucket's plain midpoint.
+category,material,size,size_score,region,season,price_inr,source,observed_or_synthesised
+clay pottery,clay,small,0.0375,north,regular,160,compiled from typical Indian pottery market range,synthesised
+clay pottery,clay,small,0.1125,west,diwali,220,compiled from typical Indian pottery market range,synthesised
+clay pottery,clay,medium,0.2,north,regular,340,compiled from typical Indian pottery market range,synthesised
+clay pottery,clay,medium,0.3,south,regular,400,compiled from typical Indian pottery market range,synthesised
+clay pottery,clay,medium,0.4,west,diwali,480,compiled from typical Indian pottery market range,synthesised
+clay pottery,clay,large,0.55,central,regular,750,compiled from typical Indian pottery market range,synthesised
+clay pottery,clay,large,0.75,north,diwali,950,compiled from typical Indian pottery market range,synthesised
+terracotta diya,terracotta,small,0.075,west,diwali,45,compiled from typical Indian pottery market range,synthesised
+terracotta diya,terracotta,small,0.125,north,diwali,55,compiled from typical Indian pottery market range,synthesised
+terracotta diya,terracotta,small,0.025,east,regular,30,compiled from typical Indian pottery market range,synthesised
+terracotta diya,terracotta,medium,0.3,central,diwali,110,compiled from typical Indian pottery market range,synthesised
+brass idol,brass,small,0.0375,south,regular,600,compiled from typical Indian brass-craft market range,synthesised
+brass idol,brass,small,0.1125,north,diwali,750,compiled from typical Indian brass-craft market range,synthesised
+brass idol,brass,medium,0.225,south,regular,1400,compiled from typical Indian brass-craft market range,synthesised
+brass idol,brass,medium,0.375,west,wedding,1800,compiled from typical Indian brass-craft market range,synthesised
+brass idol,brass,large,0.55,south,diwali,3800,compiled from typical Indian brass-craft market range,synthesised
+brass idol,brass,large,0.75,north,regular,4600,compiled from typical Indian brass-craft market range,synthesised
+dhokra figurine,brass,small,0.0375,east,regular,750,compiled from typical Indian dhokra-craft market range,synthesised
+dhokra figurine,brass,small,0.1125,central,regular,900,compiled from typical Indian dhokra-craft market range,synthesised
+dhokra figurine,brass,medium,0.225,east,diwali,1900,compiled from typical Indian dhokra-craft market range,synthesised
+dhokra figurine,brass,medium,0.375,central,regular,2200,compiled from typical Indian dhokra-craft market range,synthesised
+copper vessel,copper,small,0.0375,north,regular,480,compiled from typical Indian copperware market range,synthesised
+copper vessel,copper,small,0.1125,west,wedding,620,compiled from typical Indian copperware market range,synthesised
+copper vessel,copper,medium,0.225,north,regular,1150,compiled from typical Indian copperware market range,synthesised
+copper vessel,copper,medium,0.375,south,regular,1350,compiled from typical Indian copperware market range,synthesised
+copper vessel,copper,large,0.55,north,wedding,2900,compiled from typical Indian copperware market range,synthesised
+copper vessel,copper,large,0.75,west,regular,3200,compiled from typical Indian copperware market range,synthesised
+silver jewellery,silver,small,0.1125,south,wedding,1600,compiled from typical Indian silver-jewellery market range,synthesised
+silver jewellery,silver,small,0.0375,north,regular,1300,compiled from typical Indian silver-jewellery market range,synthesised
+silver jewellery,silver,medium,0.375,south,wedding,4200,compiled from typical Indian silver-jewellery market range,synthesised
+silver jewellery,silver,medium,0.225,west,regular,3600,compiled from typical Indian silver-jewellery market range,synthesised
+bandhani dupatta,cotton,medium,0.375,west,wedding,1100,compiled from typical Indian bandhani market range,synthesised
+bandhani dupatta,cotton,medium,0.225,west,regular,750,compiled from typical Indian bandhani market range,synthesised
+bandhani dupatta,cotton,large,0.55,west,wedding,2400,compiled from typical Indian bandhani market range,synthesised
+bandhani dupatta,silk,large,0.75,west,wedding,2900,compiled from typical Indian bandhani market range,synthesised
+handloom cotton saree,cotton,medium,0.225,east,regular,1200,compiled from typical Indian handloom market range,synthesised
+handloom cotton saree,cotton,medium,0.375,south,regular,1400,compiled from typical Indian handloom market range,synthesised
+handloom cotton saree,cotton,large,0.55,east,wedding,3100,compiled from typical Indian handloom market range,synthesised
+handloom cotton saree,cotton,large,0.75,south,wedding,3400,compiled from typical Indian handloom market range,synthesised
+banarasi silk saree,silk,medium,0.225,north,regular,4800,compiled from typical Indian silk-saree market range,synthesised
+banarasi silk saree,silk,medium,0.375,north,wedding,6200,compiled from typical Indian silk-saree market range,synthesised
+banarasi silk saree,silk,large,0.65,north,wedding,13500,compiled from typical Indian silk-saree market range,synthesised
+kanjivaram silk saree,silk,medium,0.3,south,regular,5200,compiled from typical Indian silk-saree market range,synthesised
+kanjivaram silk saree,silk,large,0.65,south,wedding,15000,compiled from typical Indian silk-saree market range,synthesised
+pashmina shawl,wool,small,0.075,north,regular,2100,compiled from typical Indian pashmina market range,synthesised
+pashmina shawl,wool,medium,0.3,north,wedding,5400,compiled from typical Indian pashmina market range,synthesised
+pashmina shawl,wool,large,0.65,north,wedding,11000,compiled from typical Indian pashmina market range,synthesised
+jute bag,jute,small,0.075,east,regular,220,compiled from typical Indian jute-craft market range,synthesised
+jute bag,jute,medium,0.3,east,regular,480,compiled from typical Indian jute-craft market range,synthesised
+bamboo basket,bamboo,small,0.075,northeast,regular,230,compiled from typical Indian bamboo-craft market range,synthesised
+bamboo basket,bamboo,medium,0.3,northeast,regular,520,compiled from typical Indian bamboo-craft market range,synthesised
+bamboo basket,bamboo,large,0.65,northeast,regular,1300,compiled from typical Indian bamboo-craft market range,synthesised
+wooden toy,wood,small,0.0375,south,regular,170,compiled from typical Indian wooden-toy market range,synthesised
+wooden toy,wood,small,0.1125,north,diwali,220,compiled from typical Indian wooden-toy market range,synthesised
+wooden toy,wood,medium,0.3,south,regular,450,compiled from typical Indian wooden-toy market range,synthesised
+madhubani painting,paper,small,0.075,east,regular,850,compiled from typical Indian madhubani-art market range,synthesised
+madhubani painting,paper,medium,0.3,east,regular,2300,compiled from typical Indian madhubani-art market range,synthesised
+madhubani painting,paper,large,0.65,east,wedding,6800,compiled from typical Indian madhubani-art market range,synthesised

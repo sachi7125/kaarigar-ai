@@ -18,6 +18,9 @@ models:
   describe:  gemini-free            # -> gemini-3.6-flash over REST (needs a free-tier key; else template)
   tts:       offline-voice       # shared: read-back, onboarding, alerts, nudges
 
+readback:
+  max_confirm_attempts: 2         # spoken yes/no tries before we give up (never publishes)
+
 image:
   bg_removal: rembg-u2net
   bg_model: u2netp                # lightweight U2-Net (~4MB): fast on CPU/phones; use "u2net" for max quality
@@ -32,6 +35,7 @@ pricing:
   band_halfwidth_frac: 0.15      # band = point ± 15%
   seasonal_multiplier_cap: 0.25  # |multiplier - 1| never exceeds this
   material_rate_table: data/reference/material_rates.csv   # dated + sourced
+  size_estimates: data/reference/size_estimates.csv         # weight_kg + hours by size_class (rough, flagged)
   reference_set: data/reference/pricing_reference.csv
   comparables_shown: 3           # evidence strip before the model number
   # material TYPE comes from the voice note, never the photo (D2).

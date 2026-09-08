@@ -1,0 +1,26 @@
+# KaarigarAI size-class physical estimates (Day 4, revised 6 Sep after a real bug).
+# There is no scale reference in the photo (no coin/ruler in shot) and no weighing scale on
+# site, so weight_kg and hours are deliberately conservative, hand-compiled placeholders keyed
+# by BOTH density_class (from material_rates.csv — precious/metal/bulk) and the
+# vision-suggested + spoken-confirmed size_class. hours also varies by density_class, not just
+# size_class — e.g. silversmithing is slower, more detailed work per size than shaping clay.
+#
+# Why density_class exists: testing 6 Sep found a "medium" silver item costed out at 1.0kg of
+# silver (Rs.250,300 floor) using the original single weight-by-size-class table — a medium
+# silver pendant/necklace actually weighs tens of grams, not a kilogram. `bulk` (clay, textile,
+# wood) keeps the original kg-scale weights; `metal` (brass, copper hardware/idols) sits in
+# between; `precious` (silver) is gram-scale. Used only to derive the fair-price FLOOR (material
+# cost = weight_kg x rate; labour cost = hours x pricing.floor_wage_per_hour) — the floor only
+# warns, it never blocks or quotes a price (D3, D13), so an approximate estimate here can only
+# under- or over-warn, never lock an artisan out of her own pricing. Replace with real
+# measurements if/when available.
+density_class,size_class,weight_kg,hours,note
+bulk,small,0.3,2,e.g. a diya, a coaster-sized item, a small wooden toy
+bulk,medium,1.0,5,e.g. a dinner-plate-sized pot, a dupatta, a mid-size wood carving
+bulk,large,3.0,10,e.g. a full saree, a large vessel, a large sculpture
+metal,small,0.15,3,e.g. a small brass/copper idol or trinket
+metal,medium,0.6,6,e.g. a mid-size brass idol or copper vessel
+metal,large,2.0,12,e.g. a large brass/copper vessel or sculpture
+precious,small,0.01,4,e.g. a silver earring or small pendant (~10g) — silversmithing is slow work relative to its weight
+precious,medium,0.04,8,e.g. a silver necklace or bangle set (~40g)
+precious,large,0.1,14,e.g. a heavier silver jewellery set or small idol (~100g)

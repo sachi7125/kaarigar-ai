@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ listing.title_en }} — KaarigarAI</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #F9FAFB; color: #1F2937; line-height: 1.5;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 20px 60px; }
+  .url { font-size: 12px; color: #9CA3AF; margin-bottom: 16px; word-break: break-all; }
+  .photo {
+    width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 16px;
+    background: #E5E7EB;
+  }
+  .photo-placeholder {
+    width: 100%; aspect-ratio: 1; border-radius: 16px; background: #E5E7EB;
+    display: flex; align-items: center; justify-content: center; color: #9CA3AF; font-size: 14px;
+  }
+  h1 { font-size: 22px; margin: 20px 0 4px; }
+  .title-hi { font-size: 16px; color: #6B7280; margin: 0 0 16px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+    color: #065F46; background: #D1FAE5; padding: 4px 10px; border-radius: 999px; margin-bottom: 16px;
+  }
+  .price-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .price { font-size: 32px; font-weight: 700; color: #4F46E5; }
+  .band { font-size: 13px; color: #9CA3AF; }
+  .stock { font-size: 13px; color: #6B7280; margin-bottom: 20px; }
+  .stock.sold-out { color: #B91C1C; font-weight: 600; }
+  .desc { font-size: 15px; color: #374151; margin-bottom: 28px; white-space: pre-wrap; }
+  .card {
+    background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 16px; margin: 0 0 14px; }
+  label { display: block; font-size: 13px; color: #374151; margin: 12px 0 4px; font-weight: 500; }
+  input, textarea {
+    width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #D1D5DB;
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+  }
+  button {
+    width: 100%; margin-top: 18px; padding: 13px; background: #4F46E5; color: #fff;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { background: #A5B4FC; cursor: not-allowed; }
+  .disclaimer { font-size: 12px; color: #9CA3AF; margin-top: 14px; }
+  .result { margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 14px; display: none; }
+  .result.ok { background: #D1FAE5; color: #065F46; display: block; }
+  .result.declined { background: #FEE2E2; color: #991B1B; display: block; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="url">kaarigar.in/l/{{ listing.id }}</div>
+
+    {% if listing.image_path %}
+      <img class="photo" src="/media/{{ listing.image_path.split('/')[-1] }}" alt="{{ listing.title_en }}">
+    {% else %}
+      <div class="photo-placeholder">No photo</div>
+    {% endif %}
+
+    <h1>{{ listing.title_en }}</h1>
+    <p class="title-hi">{{ listing.title_hi }}</p>
+
+    {% if listing.artisan.verified %}
+      <div class="badge">✓ verified artisan</div>
+    {% endif %}
+
+    <div class="price-row">
+      <span class="price">₹{{ "%.0f"|format(listing.price_inr) }}</span>
+      {% if listing.band_low_inr and listing.band_high_inr %}
+        <span class="band">band ₹{{ "%.0f"|format(listing.band_low_inr) }}–₹{{ "%.0f"|format(listing.band_high_inr) }}</span>
+      {% endif %}
+    </div>
+
+    {% if listing.status == "sold_out" %}
+      <div class="stock sold-out">Sold out</div>
+    {% elif listing.stock_type == "batch" %}
+      <div class="stock">{{ listing.remaining_count }} of {{ listing.total_count }} available</div>
+    {% endif %}
+
+    <p class="desc">{{ listing.description_en }}</p>
+
+    <div class="card">
+      {% if listing.status == "sold_out" %}
+        <h2>This listing is sold out</h2>
+      {% else %}
+        <h2>Make an offer</h2>
+        <form id="offer-form">
+          <label for="buyer_name">Your name</label>
+          <input id="buyer_name" required>
+          <label for="buyer_contact">Phone or email</label>
+          <input id="buyer_contact" required>
+          <label for="price_inr">Your offer (₹)</label>
+          <input id="price_inr" type="number" min="1" value="{{ '%.0f'|format(listing.price_inr) }}" required>
+          <label for="quantity">Quantity</label>
+          <input id="quantity" type="number" min="1" max="{{ listing.remaining_count }}" value="1" required>
+          <label for="message">Message (optional)</label>
+          <textarea id="message" rows="2"></textarea>
+          <button type="submit" id="submit-btn">Send offer</button>
+          <div class="disclaimer">
+            Offers below the asking price are declined automatically. Contact details
+            are exchanged only after the artisan accepts.
+          </div>
+          <div class="result" id="result"></div>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+<script>
+document.getElementById('offer-form')?.addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const result = document.getElementById('result');
+  btn.disabled = true;
+  result.className = 'result';
+  result.textContent = '';
+  try {
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        listing_id: '{{ listing.id }}',
+        buyer_name: document.getElementById('buyer_name').value,
+        buyer_contact: document.getElementById('buyer_contact').value,
+        price_inr: parseFloat(document.getElementById('price_inr').value),
+        quantity: parseInt(document.getElementById('quantity').value, 10),
+        message: document.getElementById('message').value || null,
+      }),
+    });
+    const data = await res.json();
+    if (data.status === 'submitted') {
+      result.className = 'result ok';
+      result.textContent = 'Offer sent. The artisan will respond soon.';
+      document.getElementById('offer-form').querySelectorAll('input, textarea, button').forEach(el => el.disabled = true);
+    } else if (data.status === 'declined') {
+      result.className = 'result declined';
+      result.textContent = data.message || 'This offer could not be accepted.';
+      btn.disabled = false;
+    } else {
+      result.className = 'result declined';
+      result.textContent = data.detail || 'Something went wrong.';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    result.className = 'result declined';
+    result.textContent = 'Network error — please try again.';
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

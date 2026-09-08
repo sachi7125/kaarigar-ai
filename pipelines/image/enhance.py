@@ -146,6 +146,14 @@ def _subject_alpha(bgr: np.ndarray, mask_max_side: int = 720) -> tuple[np.ndarra
     return alpha, method
 
 
+def subject_mask(bgr: np.ndarray, mask_max_side: int = 720) -> np.ndarray:
+    """Public wrapper around the subject alpha mask, for reuse outside this module
+    (e.g. pipelines.pricing.attributes' finish heuristic) without duplicating the
+    u2netp/GrabCut segmentation."""
+    alpha, _method = _subject_alpha(bgr, mask_max_side)
+    return alpha
+
+
 def cutout_metrics(alpha: np.ndarray) -> tuple[float, float]:
     """(coverage, subject_frac): fraction of frame kept, and the largest connected
     blob as a fraction of all kept pixels."""

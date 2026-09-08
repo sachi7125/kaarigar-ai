@@ -1,0 +1,64 @@
+# KaarigarAI per-category weight/hours overrides (Day 4 recalibration, 6 Sep).
+# `size_estimates.csv`'s density_class table (precious/metal/bulk) assumes "large" means the
+# same physical weight for every object in that density class — which broke down under testing:
+# a "large wooden toy" was costed as 2kg of sandalwood (Rs.20,000 of material for a toy) because
+# wood's `bulk` bucket assumes up to 3kg, a reasonable number for a saree or a sack of jute but
+# absurd for a toy. Weight fundamentally depends on what the OBJECT is, not just what density
+# class its material falls into, so this table overrides `size_estimates.csv` per (category,
+# size_class) wherever we have a specific one — `floor.py` falls back to the generic
+# density_class table for any category not listed here (out-of-range honesty: an unlisted
+# category still gets an answer, just a less specific one).
+# Figures are reasoned estimates (typical real weight/working-hours for that object), not
+# measurements — same caveat as size_estimates.csv. Revisit if a demo item's craft doesn't fit.
+category,size_class,weight_kg,hours,note
+clay pottery,small,0.3,2,small pot/cup
+clay pottery,medium,1.0,5,dinner-plate-sized pot
+clay pottery,large,3.0,10,large storage vessel
+terracotta diya,small,0.05,1,small clay lamp
+terracotta diya,medium,0.15,2,mid-size decorative diya
+terracotta diya,large,0.4,3,large decorative diya
+brass idol,small,0.2,4,small cast figure
+brass idol,medium,0.8,8,mid-size idol
+brass idol,large,2.5,16,large idol/statue
+dhokra figurine,small,0.15,4,hollow lost-wax casting is lighter than solid brass
+dhokra figurine,medium,0.5,8,mid-size figurine
+dhokra figurine,large,1.5,16,large figurine
+copper vessel,small,0.3,3,small cup/lota
+copper vessel,medium,0.8,6,mid-size vessel
+copper vessel,large,2.0,12,large vessel
+silver jewellery,small,0.01,3,~10g — earrings/pendant
+silver jewellery,medium,0.03,6,~30g — necklace/bangle set
+silver jewellery,large,0.08,10,~80g — heavier set or small idol
+bandhani dupatta,small,0.1,3,lightweight tie-dye scarf
+bandhani dupatta,medium,0.2,5,standard dupatta
+bandhani dupatta,large,0.35,8,heavier zari-worked dupatta
+handloom cotton saree,small,0.3,6,lighter cotton weave
+handloom cotton saree,medium,0.45,10,standard saree
+handloom cotton saree,large,0.65,16,heavier/finer weave
+banarasi silk saree,small,0.3,8,lighter silk weave
+banarasi silk saree,medium,0.5,14,standard banarasi saree
+banarasi silk saree,large,0.9,22,heavy zari brocade work
+kanjivaram silk saree,small,0.35,8,lighter kanjivaram
+kanjivaram silk saree,medium,0.55,14,standard kanjivaram
+kanjivaram silk saree,large,1.0,22,dense silk/zari kanjivaram
+pashmina shawl,small,0.15,10,fine weave is slow relative to weight
+pashmina shawl,medium,0.25,16,standard shawl
+pashmina shawl,large,0.4,24,large/embroidered shawl
+jute bag,small,0.15,2,small pouch
+jute bag,medium,0.35,4,standard bag
+jute bag,large,0.7,7,large tote
+bamboo basket,small,0.2,3,small basket
+bamboo basket,medium,0.6,6,standard basket
+bamboo basket,large,1.5,10,large basket/hamper
+wooden toy,small,0.05,2,small carved toy
+wooden toy,medium,0.15,4,mid-size toy
+wooden toy,large,0.4,7,large toy
+madhubani painting,small,0.02,4,paper/canvas — weight is negligible, time is not
+madhubani painting,medium,0.05,8,standard painting
+madhubani painting,large,0.1,14,large detailed painting
+leather footwear,small,0.1,3,single sandal/slipper or a light pair
+leather footwear,medium,0.2,5,standard pair of chappals/sandals
+leather footwear,large,0.4,8,heavier pair — boots, platform/heeled footwear
+leather bag,small,0.3,4,small pouch/wallet
+leather bag,medium,0.7,8,standard handbag
+leather bag,large,1.3,14,large tote/satchel

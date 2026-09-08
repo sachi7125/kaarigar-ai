@@ -18,8 +18,15 @@ ml/models/*.ubj
 # data (keep reference small + committed; ignore bulky raw)
 data/raw/*
 !data/raw/.gitkeep
-# Gemini listing cache (dev runs); demo pre-cache is curated separately
+# Gemini caches (dev runs); demo pre-cache is curated separately
 data/processed/listing_cache/
+data/processed/maker_story_cache/
+
+# backend runtime state — NOT source. The dev SQLite DB is recreated by
+# init_db() on startup, and data/uploads/ is artisan-uploaded photos/audio
+# (real phone numbers, real voice notes, real photos during testing). This
+# repo is public; none of that belongs in it.
+backend/data/
 
 # local test recordings
 *.m4a

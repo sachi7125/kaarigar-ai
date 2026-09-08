@@ -1,0 +1,25 @@
+# KaarigarAI material-rate table (Day 4, decision D13).
+# Cost = material type (from voice) x this rate x size/weight (photo + voice). Never asked.
+# rate_inr is per `unit`. `confidence` = "live" (fetched from a named source on `date`) or
+# "typical-range" (conservative, manually compiled — matches D3: only the metals/silk move
+# enough to matter; the floor is a warning, not a quote, so staleness on the rest barely
+# changes it). Re-verify "typical-range" rows against Agmarknet/eNAM/MCX/WPI before the demo
+# (data_sources.md checklist) — this snapshot is a working default, not a live feed.
+# `density_class` picks which weight_kg column of size_estimates.csv to use for this material —
+# a "medium" silver pendant and a "medium" clay pot are not remotely the same physical weight
+# (bug found in testing 6 Sep: treating all materials as one weight scale gave a silver floor
+# of Rs.250,300 for a piece that should weigh grams, not a kilogram).
+material,unit,rate_inr,date,source,confidence,density_class,notes
+silver,kg,250000,2026-09-05,https://www.goodreturns.in/silver-rates/,live,precious,India retail silver rate
+copper,kg,1375,2026-09-04,https://tradingeconomics.com/commodity/copper (USD/lb, converted at 1 USD = 94.55 INR via xe.com 2026-09-05),live,metal,LME/COMEX benchmark; Indian scrap/retail copper often carries a duty/premium above this
+brass,kg,480,2026-09-05,manually compiled from typical Indian brass scrap/sheet market range,typical-range,metal,alloy of copper+zinc; craft-grade sheet/scrap runs cheaper per kg than pure copper
+clay,kg,10,2026-09-05,manually compiled from typical potter's-clay market range,typical-range,bulk,raw unfired clay; includes terracotta clay
+terracotta,kg,10,2026-09-05,manually compiled from typical potter's-clay market range,typical-range,bulk,same rate as clay — fired terracotta uses the same raw material
+cotton,kg,170,2026-09-05,manually compiled from typical Indian raw cotton lint range,typical-range,bulk,raw fibre proxy; finished handloom cloth cost varies by weave
+silk,kg,5000,2026-09-05,manually compiled from typical Indian raw mulberry silk yarn range,typical-range,bulk,raw yarn; costlier silks (tussar/muga finished cloth) run higher
+wool,kg,300,2026-09-05,manually compiled from typical Indian raw wool range,typical-range,bulk,raw fibre proxy
+jute,kg,50,2026-09-05,manually compiled from typical Indian raw jute fibre range,typical-range,bulk,raw fibre proxy
+bamboo,kg,50,2026-09-05,manually compiled from typical Indian raw bamboo range,typical-range,bulk,priced by weight as a craft-material proxy; poles are often sold by length instead
+sandalwood,kg,10000,2026-09-05,manually compiled from typical Indian sandalwood market range,typical-range,bulk,heavily regulated/CITES-restricted — genuine sandalwood rate varies hugely by grade and legal source; treat this figure as indicative only
+wood,kg,120,2026-09-05,manually compiled from typical Indian craft-grade softwood/timber-offcut range,typical-range,bulk,generic carving/toy wood — NOT sandalwood; see the sandalwood row for that specific material
+leather,kg,400,2026-09-07,manually compiled from typical Indian craft-grade leather (goat/buffalo hide) market range,typical-range,bulk,finished/tanned craft leather for footwear and small goods; genuine exotic leathers (snake/crocodile) run far higher — treat this as a generic-hide baseline only

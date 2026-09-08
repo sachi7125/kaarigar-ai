@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ artisan.id }} — KaarigarAI storefront</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #F9FAFB; color: #1F2937; line-height: 1.5;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 20px 60px; }
+  .url { font-size: 12px; color: #9CA3AF; margin-bottom: 16px; word-break: break-all; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+    color: #065F46; background: #D1FAE5; padding: 4px 10px; border-radius: 999px; margin-bottom: 16px;
+  }
+  h1 { font-size: 22px; margin: 4px 0 20px; }
+  .story-card {
+    background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 28px;
+  }
+  .story-card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: #9CA3AF; margin: 0 0 10px; }
+  .story-en { font-size: 15px; color: #374151; margin: 0 0 6px; }
+  .story-hi { font-size: 15px; color: #374151; margin: 0; }
+  .story-empty { font-size: 14px; color: #9CA3AF; font-style: italic; }
+  .section-title { font-size: 16px; font-weight: 700; margin: 0 0 14px; }
+  .listing-card {
+    display: flex; gap: 14px; background: #fff; border-radius: 14px; padding: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 12px; text-decoration: none; color: inherit;
+  }
+  .listing-photo {
+    width: 76px; height: 76px; border-radius: 10px; object-fit: cover; background: #E5E7EB;
+    flex-shrink: 0;
+  }
+  .listing-info { flex: 1; min-width: 0; }
+  .listing-title { font-size: 14px; font-weight: 600; margin: 0 0 4px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .listing-price { font-size: 15px; font-weight: 700; color: #4F46E5; }
+  .listing-status { font-size: 12px; color: #6B7280; margin-top: 2px; }
+  .listing-status.sold-out { color: #B91C1C; font-weight: 600; }
+  .empty { font-size: 14px; color: #9CA3AF; padding: 20px 0; }
+  .card {
+    background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-top: 28px;
+  }
+  .card h2 { font-size: 16px; margin: 0 0 6px; }
+  .card p { font-size: 13px; color: #6B7280; margin: 0 0 14px; }
+  label { display: block; font-size: 13px; color: #374151; margin: 12px 0 4px; font-weight: 500; }
+  input {
+    width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #D1D5DB;
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+  }
+  button {
+    width: 100%; margin-top: 18px; padding: 13px; background: #4F46E5; color: #fff;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { background: #A5B4FC; cursor: not-allowed; }
+  .disclaimer { font-size: 12px; color: #9CA3AF; margin-top: 14px; }
+  .result { margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 14px; display: none; }
+  .result.ok { background: #D1FAE5; color: #065F46; display: block; }
+  .result.declined { background: #FEE2E2; color: #991B1B; display: block; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="url">kaarigar.in/s/{{ artisan.id }}</div>
+    {% if artisan.verified %}
+      <div class="badge">✓ verified artisan</div>
+    {% endif %}
+    <h1>Artisan storefront</h1>
+
+    <div class="story-card">
+      <h2>Maker's story</h2>
+      {% if artisan.maker_story_text_en %}
+        <p class="story-en">{{ artisan.maker_story_text_en }}</p>
+        <p class="story-hi">{{ artisan.maker_story_text_hi }}</p>
+      {% else %}
+        <p class="story-empty">This maker hasn't recorded their story yet.</p>
+      {% endif %}
+    </div>
+
+    <div class="section-title">Listings ({{ listings|length }})</div>
+    {% if listings %}
+      {% for l in listings %}
+        <a class="listing-card" href="/l/{{ l.id }}">
+          {% if l.image_path %}
+            <img class="listing-photo" src="/media/{{ l.image_path.split('/')[-1] }}" alt="">
+          {% else %}
+            <div class="listing-photo"></div>
+          {% endif %}
+          <div class="listing-info">
+            <div class="listing-title">{{ l.title_en }}</div>
+            <div class="listing-price">₹{{ "%.0f"|format(l.price_inr) }}</div>
+            {% if l.status == "sold_out" %}
+              <div class="listing-status sold-out">Sold out</div>
+            {% elif l.stock_type == "batch" %}
+              <div class="listing-status">{{ l.remaining_count }} of {{ l.total_count }} available</div>
+            {% endif %}
+          </div>
+        </a>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No listings published yet.</div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Follow this maker</h2>
+      <p>Get a weekly email when they publish new work. One click to unsubscribe, any time.</p>
+      <form id="follow-form">
+        <label for="email">Your email</label>
+        <input id="email" type="email" required>
+        <button type="submit" id="follow-btn">Follow</button>
+        <div class="result" id="result"></div>
+      </form>
+    </div>
+  </div>
+
+<script>
+document.getElementById('follow-form')?.addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const btn = document.getElementById('follow-btn');
+  const result = document.getElementById('result');
+  btn.disabled = true;
+  result.className = 'result';
+  result.textContent = '';
+  try {
+    const res = await fetch('/api/storefront/follow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        artisan_id: '{{ artisan.id }}',
+        email: document.getElementById('email').value,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      result.className = 'result ok';
+      result.textContent = "You're following this maker. Check your email for new work.";
+      document.getElementById('follow-form').querySelectorAll('input, button').forEach(el => el.disabled = true);
+    } else {
+      result.className = 'result declined';
+      result.textContent = data.detail || 'Something went wrong.';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    result.className = 'result declined';
+    result.textContent = 'Network error — please try again.';
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

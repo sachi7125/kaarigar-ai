@@ -25,7 +25,10 @@ pyttsx3>=2.90          # offline TTS (server-side); flutter_tts on device
 
 # --- pricing ---
 xgboost>=2.0
-shap>=0.45
+# NO `shap` package: it took ~20s to import on this machine — the same class of
+# import-time tax D9/D11/D12 already refused elsewhere. XGBoost's own
+# `Booster.predict(..., pred_contribs=True)` gives the exact same Shapley-value
+# decomposition for a tree ensemble with no extra dependency (see D16).
 scikit-learn>=1.4
 numpy>=1.26
 pandas>=2.2
@@ -33,6 +36,7 @@ pandas>=2.2
 # --- delivery toolkit ---
 qrcode>=7.4
 openpyxl>=3.1          # export bundle spreadsheets
+email-validator>=2.1   # pydantic EmailStr for the follow endpoint; imports in ~15ms, kept
 
 streamlit>=1.35        # local playground / Day 6 demo
 

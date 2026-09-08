@@ -9,19 +9,23 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  camera: ^0.11.0          # capture the craft
-  record: ^5.1.0           # voice notes
+  camera: ^0.12.0          # capture the craft
+  record: ^7.1.1           # voice notes
   sqflite: ^2.3.0          # local store + drafts
   path_provider: ^2.1.0
   http: ^1.2.0             # talks to FastAPI
   flutter_tts: ^4.0.0      # spoken read-back / nudges (or platform TTS)
-  connectivity_plus: ^6.0.0 # online/offline state for the sync queue
+  connectivity_plus: ^7.3.1 # online/offline state for the sync queue
   image: ^4.2.0            # downscale before queueing
+  uuid: ^4.3.3             # client IDs
+  path: ^1.9.0             # path joining for local_db.dart
+  share_plus: ^10.0.0      # OS share sheet — share card to WhatsApp, export bundle file (Day 6)
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  sqflite_common_ffi: ^2.3.0 # sqlite backend for widget tests (no platform channel in the test VM)
 
 flutter:
   uses-material-design: true
