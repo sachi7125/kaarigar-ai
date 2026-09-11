@@ -130,13 +130,18 @@ def follow_artisan(req: FollowRequest, db: Session = Depends(get_db)):
     if artisan is None:
         raise HTTPException(status_code=404, detail="unknown artisan")
 
+    # Emails are case-insensitive in practice — normalise before storing or
+    # comparing, so Alice@Example.com and alice@example.com don't create two
+    # Follower rows (and two weekly emails, and a half-working unsubscribe).
+    email = req.email.strip().lower()
+
     existing = db.query(Follower).filter(
-        Follower.artisan_id == req.artisan_id, Follower.email == req.email,
+        Follower.artisan_id == req.artisan_id, Follower.email == email,
     ).first()
     if existing is not None:
         return {"status": "already_following", "unsubscribe_token": existing.unsubscribe_token}
 
-    follower = Follower(artisan_id=req.artisan_id, email=req.email)
+    follower = Follower(artisan_id=req.artisan_id, email=email)
     db.add(follower)
     db.commit()
     db.refresh(follower)

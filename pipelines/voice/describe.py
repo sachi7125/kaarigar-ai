@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
@@ -202,6 +203,116 @@ def _strip_fence(raw: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# category keyword fallback (Day 7)                                           #
+# --------------------------------------------------------------------------- #
+# When Gemini isn't reachable and the caller didn't supply a category in
+# `attributes`, the template used to return category="" — which meant
+# floor.py couldn't match against category_weight_overrides.csv and fell
+# back to the generic density-class weight (a known Day-6 bug, watchlist).
+# This is a plain keyword match against the transcript, same pattern as
+# pipelines.pricing.attributes' MATERIAL_TERMS: no model, no invention.
+# Categories on the right-hand side are the exact strings that
+# category_weight_overrides.csv uses, so floor.py's lookup will hit.
+# Values that are dicts disambiguate by the already-extracted material
+# (e.g. "saree" → banarasi silk saree if silk was heard, else handloom
+# cotton saree). Unmatched transcript stays "" — no worse than today.
+_DEVA_RANGE = "ऀ-ॿ"
+_WORD_RE = re.compile(rf"[\w{_DEVA_RANGE}]+", re.UNICODE)
+
+_CATEGORY_OBJECT_TERMS: dict[str, str | dict[str, str]] = {
+    # --- pottery ---
+    "मटका": "clay pottery", "मटकी": "clay pottery", "matka": "clay pottery",
+    "कुल्हड़": "clay pottery", "pot": "clay pottery",
+    # --- diya (specific — check before generic pottery words) ---
+    "दीया": "terracotta diya", "diya": "terracotta diya",
+    "दीये": "terracotta diya", "diyas": "terracotta diya",
+    # --- idol: dhokra keyword wins over generic murti/idol if present ---
+    "dhokra": "dhokra figurine", "ढोकरा": "dhokra figurine",
+    "मूर्ति": "brass idol", "मूर्ती": "brass idol",
+    "idol": "brass idol", "statue": "brass idol", "murti": "brass idol",
+    # --- vessels: disambiguate copper/brass metal vs clay ---
+    "लोटा": "copper vessel", "lota": "copper vessel",
+    "vessel": {"copper": "copper vessel", "brass": "copper vessel",
+               "clay": "clay pottery", "default": "copper vessel"},
+    "बर्तन": {"copper": "copper vessel", "brass": "copper vessel",
+              "clay": "clay pottery", "default": "clay pottery"},
+    "cup": {"copper": "copper vessel", "clay": "clay pottery",
+            "default": "clay pottery"},
+    # --- jewellery ---
+    "कड़ा": "silver jewellery", "kada": "silver jewellery",
+    "गहना": "silver jewellery", "गहने": "silver jewellery",
+    "जेवर": "silver jewellery",
+    "jewellery": "silver jewellery", "jewelry": "silver jewellery",
+    "necklace": "silver jewellery", "earring": "silver jewellery",
+    "earrings": "silver jewellery", "bangle": "silver jewellery",
+    "bangles": "silver jewellery",
+    "हार": "silver jewellery", "झुमका": "silver jewellery",
+    # --- saree: kanjivaram wins over generic silk-vs-cotton disambiguation ---
+    "kanjivaram": "kanjivaram silk saree", "कांजीवरम": "kanjivaram silk saree",
+    "साड़ी": {"silk": "banarasi silk saree", "रेशम": "banarasi silk saree",
+              "default": "handloom cotton saree"},
+    "साडी": {"silk": "banarasi silk saree", "रेशम": "banarasi silk saree",
+             "default": "handloom cotton saree"},
+    "saree": {"silk": "banarasi silk saree", "रेशम": "banarasi silk saree",
+              "default": "handloom cotton saree"},
+    "sari": {"silk": "banarasi silk saree", "रेशम": "banarasi silk saree",
+             "default": "handloom cotton saree"},
+    # --- dupatta ---
+    "दुपट्टा": "bandhani dupatta", "dupatta": "bandhani dupatta",
+    # --- shawl ---
+    "शॉल": "pashmina shawl", "shawl": "pashmina shawl",
+    "पश्मीना": "pashmina shawl", "pashmina": "pashmina shawl",
+    # --- bag: leather vs jute ---
+    "बैग": {"leather": "leather bag", "चमड़ा": "leather bag",
+            "चमड़े": "leather bag", "लेदर": "leather bag",
+            "jute": "jute bag", "default": "jute bag"},
+    "bag": {"leather": "leather bag", "चमड़ा": "leather bag",
+            "चमड़े": "leather bag", "लेदर": "leather bag",
+            "jute": "jute bag", "default": "jute bag"},
+    "बस्ता": {"leather": "leather bag", "jute": "jute bag", "default": "jute bag"},
+    # --- basket ---
+    "टोकरी": "bamboo basket", "basket": "bamboo basket",
+    # --- toy ---
+    "खिलौना": "wooden toy", "खिलौने": "wooden toy", "toy": "wooden toy",
+    # --- painting ---
+    "पेंटिंग": "madhubani painting", "painting": "madhubani painting",
+    "मधुबनी": "madhubani painting", "madhubani": "madhubani painting",
+    # --- footwear ---
+    "चप्पल": "leather footwear", "chappal": "leather footwear",
+    "chappals": "leather footwear",
+    "sandal": "leather footwear", "sandals": "leather footwear",
+    "जूता": "leather footwear", "जूते": "leather footwear",
+    "shoe": "leather footwear", "shoes": "leather footwear",
+}
+
+
+def _guess_category(transcript: str, materials: list[str]) -> str:
+    """Keyword-based category guess for the template fallback. Returns one of
+    the categories in category_weight_overrides.csv or "" if nothing matched.
+    Callers treat "" the same as today's empty-category case — no regression.
+    Disambiguation checks the confirmed materials list first, then the
+    transcript itself, so a spoken "silk saree" (with no material attribute
+    yet) still resolves to banarasi silk saree rather than the cotton default.
+    """
+    tokens = _WORD_RE.findall((transcript or "").lower())
+    token_set = set(tokens)
+    mats_lower = [str(m).lower() for m in (materials or [])]
+    for tok in tokens:
+        entry = _CATEGORY_OBJECT_TERMS.get(tok)
+        if entry is None:
+            continue
+        if isinstance(entry, str):
+            return entry
+        for mat_key, cat_value in entry.items():
+            if mat_key == "default":
+                continue
+            if mat_key in mats_lower or mat_key in token_set:
+                return cat_value
+        return entry.get("default", "")
+    return ""
+
+
+# --------------------------------------------------------------------------- #
 # backend 2: offline template                                                 #
 # --------------------------------------------------------------------------- #
 def _describe_template(transcript: str, lang: str, attributes: dict) -> ListingDraft:
@@ -209,6 +320,12 @@ def _describe_template(transcript: str, lang: str, attributes: dict) -> ListingD
     cat = str(a.get("category", "")).strip().lower()
     materials = a.get("materials") or ([a["material"]] if a.get("material") else [])
     materials = [str(m).strip() for m in materials if str(m).strip()]
+
+    # Day 7: if the caller didn't supply a category (Gemini unreachable and
+    # no confirmed attribute yet), try a keyword-based guess against the
+    # transcript so floor.py can still match category_weight_overrides.csv.
+    if not cat:
+        cat = _guess_category(transcript, materials)
 
     noun = cat or "craft item"
     lead = noun if "handmade" in noun or "handloom" in noun else f"Handmade {noun}"

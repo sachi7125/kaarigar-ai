@@ -5,6 +5,7 @@ import '../models/listing_draft.dart';
 import 'capture_screen.dart';
 import 'offers_screen.dart';
 import 'dashboard_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -68,7 +69,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Color(0xFF4B5563)),
-            onPressed: () {},
+            tooltip: 'Settings',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
           )
         ],
       ),
