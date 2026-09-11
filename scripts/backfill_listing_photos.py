@@ -1,9 +1,9 @@
 """Re-make the photos of listings published before the enhanced pair existed (Day 7).
 
-    .venv/bin/python scripts/backfill_listing_photos.py
+    .venv/bin/python scripts/backfill_listing_photos.py          # listings without the enhanced pair
+    .venv/bin/python scripts/backfill_listing_photos.py --redo   # every listing, e.g. after the pipeline changed
 
-Runs every listing whose photo isn't already the enhanced pair through the
-same pipeline publish now uses (app/services/photos.py). Uses DATABASE_URL like
+Runs listings through the same pipeline publish now uses (app/services/photos.py). Uses DATABASE_URL like
 the server does, so it updates whichever database the server is pointed at.
 Only listings whose original upload is still on this machine can be redone;
 the rest are left exactly as they are.
@@ -24,12 +24,13 @@ from app.services.photos import store_listing_photo  # noqa: E402
 
 
 def main() -> int:
+    redo = "--redo" in sys.argv[1:]
     init_db()
     db = SessionLocal()
     try:
         for listing in db.query(Listing).order_by(Listing.created_at).all():
             row = db.get(ListingPhoto, listing.id)
-            if row is not None and row.kind == "enhanced":
+            if row is not None and row.kind == "enhanced" and not redo:
                 print(f"  = {listing.id}: already enhanced")
                 continue
             if not listing.image_path or not Path(listing.image_path).is_file():

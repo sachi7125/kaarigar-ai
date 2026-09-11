@@ -1,13 +1,15 @@
 """AI Image Enhancer — mandated feature 1 (Roadmap Day 1).
 
 A rough phone photo -> a clean e-commerce image:
-  1. background removal        (rembg U2-Net; GrabCut fallback if rembg absent)
-  2. composite onto white
-  3. white balance             (gray-world, over the subject only)
-  4. lighting / contrast       (CLAHE on L channel)
-  5. failure-aware check       (bad cut-out -> keep original, ask for a retake)
-  6. saliency crop             (subject bounding box -> target aspect ratio)
-  7. texture close-up          (zoom crop of the subject centre, for textiles)
+  1. background removal        (U2-Net u2netp via onnxruntime; GrabCut fallback)
+  2. failure-aware check       (bad cut-out -> keep original, ask for a retake)
+  3. composite onto white      (the product's colour left exactly as photographed)
+  4. saliency crop             (subject bounding box -> white square)
+  5. texture close-up          (the product's most detailed square, by ORB keypoints)
+
+White balance and CLAHE lighting still exist but only run when
+`image.color_correction` is on: on real photos they changed the product's own
+colour (D8, revised 11 Sep — numbers in enhance()).
 
 Deliberately NOT doing AI upscaling (cut list). Extras (blur/shake at capture,
 synthetic shadow, perspective de-skew, angle coach) are separate, later functions.
@@ -237,22 +239,78 @@ def _crop_to_square(img: np.ndarray, box, pad_frac: float = 0.10) -> np.ndarray:
     return cv2.resize(canvas, (TARGET_SIZE, TARGET_SIZE), interpolation=cv2.INTER_AREA)
 
 
-def _texture_closeup(img: np.ndarray, box) -> np.ndarray:
-    """A zoomed square crop of the subject centre — weave / surface detail."""
+CLOSEUP_FRAC = 0.30          # close-up side, as a fraction of the product's shorter side
+CLOSEUP_MIN_PX = 360         # ...but never fewer source pixels than this, or it's a blur,
+CLOSEUP_MAX_FRAC = 0.60      # ...unless that's over 60% of the product: then it isn't a
+                             # close-up any more (and wouldn't fit inside a round pot,
+                             # whose inscribed square is 0.71 of its width)
+# How much of the window must be product, tried in order: the strictest first,
+# relaxed only for thin products (a necklace, a bangle) where no square fits
+# entirely inside.
+CLOSEUP_INSIDE_FRACS = (0.97, 0.85, 0.6)
+
+
+def _closeup_window(bgr: np.ndarray, alpha: np.ndarray, box) -> tuple[int, int, int]:
+    """(x, y, side) of the most detailed square on the product (Day 7).
+
+    Detail = ORB keypoints (corners and blobs: zari motifs, buckles, carving,
+    weave, brushwork), the part a buyer would zoom into. Keypoints only count
+    inside the product — the mask eroded a little, so its outline against the
+    background isn't mistaken for detail — and the window must lie (almost)
+    entirely on the product. A product with no detail anywhere (a plain glazed
+    pot) falls back to its most interior point, roughly the old centre crop.
+    """
+    h, w = alpha.shape[:2]
+    x0, y0, x1, y1 = box
+    shorter = min(x1 - x0, y1 - y0)
+    side = int(max(CLOSEUP_FRAC * shorter, min(CLOSEUP_MIN_PX, CLOSEUP_MAX_FRAC * shorter)))
+    side = max(16, min(side, x1 - x0 + 1, y1 - y0 + 1, h, w))
+
+    inside = (alpha > 127).astype(np.uint8)
+    k = max(3, side // 12) | 1
+    core = cv2.erode(inside, np.ones((k, k), np.uint8))
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    keypoints = cv2.ORB_create(nfeatures=3000, fastThreshold=12).detect(gray, core * 255)
+    hits = np.zeros((h, w), np.float32)
+    for kp in keypoints:
+        hits[min(int(kp.pt[1]), h - 1), min(int(kp.pt[0]), w - 1)] += 1.0
+
+    # every candidate window's keypoint count and product coverage, via integral images
+    stride = max(4, side // 8)
+    ys = np.arange(y0, max(y0, y1 - side + 1) + 1, stride)
+    xs = np.arange(x0, max(x0, x1 - side + 1) + 1, stride)
+    ys, xs = ys[ys + side <= h], xs[xs + side <= w]
+    if len(ys) and len(xs):
+        Y, X = np.meshgrid(ys, xs, indexing="ij")
+
+        def window_sums(ii: np.ndarray) -> np.ndarray:
+            return ii[Y + side, X + side] - ii[Y, X + side] - ii[Y + side, X] + ii[Y, X]
+
+        detail = window_sums(cv2.integral(hits))
+        coverage = window_sums(cv2.integral(inside)) / float(side * side)
+        for need in CLOSEUP_INSIDE_FRACS:
+            score = np.where(coverage >= need, detail, -1.0)
+            if score.max() > 0:
+                iy, ix = np.unravel_index(int(np.argmax(score)), score.shape)
+                return int(X[iy, ix]), int(Y[iy, ix]), side
+
+    dist = cv2.distanceTransform(inside, cv2.DIST_L2, 5)
+    cy, cx = np.unravel_index(int(np.argmax(dist)), dist.shape)
+    return (int(np.clip(cx - side // 2, 0, w - side)), int(np.clip(cy - side // 2, 0, h - side)), side)
+
+
+def _texture_closeup(img: np.ndarray, on_white: np.ndarray, alpha: np.ndarray, box) -> np.ndarray:
+    """The most detailed square of the product (see _closeup_window), at its
+    own resolution — only ever scaled down. The old version blew a small
+    centre crop up to 1000 px, which is what made close-ups blurry. Detail is
+    found in the photo (`img`) but the crop is taken from the cut-out on white
+    (`on_white`), so any sliver of background in the window shows as white."""
     h, w = img.shape[:2]
-    if box is None:
-        cx, cy, r = w // 2, h // 2, min(h, w) // 4
-    else:
-        x0, y0, x1, y1 = box
-        cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
-        r = int(min(x1 - x0, y1 - y0) * 0.28)
-    r = max(r, 20)
-    x0, y0 = max(0, cx - r), max(0, cy - r)
-    x1, y1 = min(w, cx + r), min(h, cy + r)
-    crop = img[y0:y1, x0:x1]
-    if crop.size == 0:
-        crop = img
-    return cv2.resize(crop, (TARGET_SIZE, TARGET_SIZE), interpolation=cv2.INTER_CUBIC)
+    x, y, side = _closeup_window(img, alpha, box if box is not None else (0, 0, w - 1, h - 1))
+    crop = on_white[y:y + side, x:x + side]
+    if side > TARGET_SIZE:
+        crop = cv2.resize(crop, (TARGET_SIZE, TARGET_SIZE), interpolation=cv2.INTER_AREA)
+    return crop
 
 
 # --------------------------------------------------------------------------- public
@@ -290,12 +348,17 @@ def enhance(input_path: str, out_dir: str) -> EnhanceResult:
                              separation, {"original_kept": str(orig_path)})
 
     # --- enhancement path ---
-    balanced = _white_balance(bgr)
-    lit = _clahe_lighting(balanced)
-    composited = _composite_white(lit, alpha)
+    # Colour stays exactly as photographed unless image.color_correction is on
+    # (D8, revised 11 Sep). Measured on the demo photos: Shades-of-Gray white
+    # balance assumes the whole scene averages grey, so on a warm scene (orange
+    # pot, wooden table) it corrected the product itself — red ×0.79, blue
+    # ×1.25, terracotta turned brown (a* +41 → +20). CLAHE then lifted a sari's
+    # lightness 90 → 105 and dulled it. The buyer is buying that colour.
+    img = _clahe_lighting(_white_balance(bgr)) if cfg_get("image.color_correction", False) else bgr
+    composited = _composite_white(img, alpha)
 
     enhanced = _crop_to_square(composited, box)
-    texture = _texture_closeup(lit, box)
+    texture = _texture_closeup(img, composited, alpha, box)
 
     enhanced_path = out / "enhanced.png"
     texture_path = out / "texture.png"
