@@ -58,8 +58,9 @@ class _OtpScreenState extends State<OtpScreen> {
     if (_digits.length != 4 || _verifying) return;
     setState(() { _verifying = true; _error = null; });
     try {
-      final ok = await OnboardingClient.verifyOtp(phone: widget.phone, otp: _digits);
-      if (ok) {
+      final token = await OnboardingClient.verifyOtp(phone: widget.phone, otp: _digits);
+      if (token != null) {
+        await ArtisanSession.setAuthToken(token);
         await ArtisanSession.setVerified(true);
         if (mounted) Navigator.pop(context, true);
       } else {

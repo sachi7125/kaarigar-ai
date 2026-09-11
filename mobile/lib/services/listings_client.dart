@@ -1,10 +1,12 @@
-// Talks to backend/app/api/listings.py. (Day 5, share card + export bundle Day 6)
+// Talks to backend/app/api/listings.py. (Day 5, share card + export bundle Day 6,
+// per-marketplace exports + sign-in token Day 7)
 
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'api_base.dart';
+import 'artisan_session.dart';
 
 class ListingsClient {
   static String get baseUrl => apiBaseUrl;
@@ -26,10 +28,11 @@ class ListingsClient {
     double? bandHighInr,
     required String stockType,
     required int totalCount,
+    String priceUnit = 'piece', // 'piece' | 'set' — a set is all totalCount pieces at priceInr
   }) async {
     final res = await http.post(
       Uri.parse('$baseUrl/listings'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ...await ArtisanSession.authHeaders()},
       body: jsonEncode({
         'artisan_id': artisanId,
         'client_id': clientId,
@@ -45,8 +48,10 @@ class ListingsClient {
         'band_high_inr': bandHighInr,
         'stock_type': stockType,
         'total_count': totalCount,
+        'price_unit': priceUnit,
       }),
     );
+    throwIfSignedOut(res.statusCode);
     if (res.statusCode != 200) {
       String detail = 'publish failed: ${res.statusCode}';
       try {
@@ -63,28 +68,39 @@ class ListingsClient {
     return List<Map<String, dynamic>>.from(jsonDecode(res.body));
   }
 
-  /// Downloads the share-card PNG for a listing to a local temp file and
+  /// Downloads the share-card PNG for a listing to the app's cache folder and
   /// returns its path — the caller hands that to the OS share sheet
   /// (`share_plus`) so "forward it on WhatsApp" (wireframe/architecture doc)
   /// is a real share, not just a preview.
   static Future<String> downloadShareCard(String listingId) async {
     final res = await http.get(Uri.parse('$baseUrl/listings/$listingId/share_card'));
     if (res.statusCode != 200) throw Exception('share_card request failed: ${res.statusCode}');
-    final dir = await getApplicationDocumentsDirectory();
-    final path = '${dir.path}/share_card_$listingId.png';
-    await File(path).writeAsBytes(res.bodyBytes);
-    return path;
+    return _saveToCache('share_card_$listingId.png', res.bodyBytes);
   }
 
-  /// Downloads the export-bundle spreadsheet (GeM/ONDC/Amazon Karigar/ODOP-
-  /// style catalog data, decision D1) to a local temp file and returns its
-  /// path.
-  static Future<String> downloadExportBundle(String listingId) async {
-    final res = await http.get(Uri.parse('$baseUrl/listings/$listingId/export_bundle'));
-    if (res.statusCode != 200) throw Exception('export_bundle request failed: ${res.statusCode}');
-    final dir = await getApplicationDocumentsDirectory();
-    final path = '${dir.path}/kaarigar_export_$listingId.xlsx';
-    await File(path).writeAsBytes(res.bodyBytes);
+  /// The marketplaces a listing can be exported for: [{id, name, format}].
+  static Future<List<Map<String, dynamic>>> exportMarketplaces() async {
+    final res = await http.get(Uri.parse('$baseUrl/exports/marketplaces'));
+    if (res.statusCode != 200) throw Exception('marketplaces request failed: ${res.statusCode}');
+    return List<Map<String, dynamic>>.from(jsonDecode(res.body));
+  }
+
+  /// One listing in one marketplace's format (Day 7). The server builds the
+  /// file only now, on this tap; the phone keeps it in its cache folder (which
+  /// Android clears on its own), not in her documents, and overwrites it on
+  /// the next export of the same listing.
+  static Future<String> downloadExport(String listingId, String marketplace) async {
+    final res = await http.get(Uri.parse('$baseUrl/listings/$listingId/export/$marketplace'));
+    if (res.statusCode != 200) throw Exception('export request failed: ${res.statusCode}');
+    final match = RegExp(r'filename="([^"]+)"').firstMatch(res.headers['content-disposition'] ?? '');
+    final name = match?.group(1) ?? 'kaarigar_${marketplace}_$listingId';
+    return _saveToCache(name, res.bodyBytes);
+  }
+
+  static Future<String> _saveToCache(String name, List<int> bytes) async {
+    final dir = await getTemporaryDirectory();
+    final path = '${dir.path}/$name';
+    await File(path).writeAsBytes(bytes);
     return path;
   }
 
@@ -98,9 +114,11 @@ class ListingsClient {
     required String lang,
   }) async {
     final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/listings/rename_by_voice'));
+    request.headers.addAll(await ArtisanSession.authHeaders());
     request.fields['lang'] = lang;
     request.files.add(await http.MultipartFile.fromPath('audio', audioPath));
     final response = await request.send();
+    throwIfSignedOut(response.statusCode);
     if (response.statusCode != 200) {
       throw Exception('rename_by_voice request failed: ${response.statusCode}');
     }
@@ -115,9 +133,10 @@ class ListingsClient {
   }) async {
     final res = await http.patch(
       Uri.parse('$baseUrl/listings/$listingId'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ...await ArtisanSession.authHeaders()},
       body: jsonEncode({'title_en': titleEn, 'title_hi': titleHi}),
     );
+    throwIfSignedOut(res.statusCode);
     if (res.statusCode != 200) {
       String detail = 'rename failed: ${res.statusCode}';
       try {

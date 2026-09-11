@@ -60,13 +60,16 @@ class PublishScreen extends StatefulWidget {
   State<PublishScreen> createState() => _PublishScreenState();
 }
 
-enum _Step { checkingVerification, priceConfirm, stockType, batchCount, publishing, done, error }
+// priceUnit (Day 7, roadmap "per-piece vs per-set → ask"): after a batch
+// count, is the price she set for each piece or for all of them together?
+enum _Step { checkingVerification, priceConfirm, stockType, batchCount, priceUnit, publishing, done, error }
 
 class _PublishScreenState extends State<PublishScreen> {
   final FlutterTts _tts = FlutterTts();
   _Step _step = _Step.checkingVerification;
   String? _stockType;
   String _countDigits = '';
+  int _batchCount = 1;
   late String _priceDigits;
   late String _titleEn;
   late String _titleHi;
@@ -143,7 +146,12 @@ class _PublishScreenState extends State<PublishScreen> {
     }
   }
 
-  Future<void> _publish(int totalCount) async {
+  Future<void> _enterPriceUnit(int count) async {
+    setState(() { _batchCount = count; _step = _Step.priceUnit; });
+    await _tts.speak('${_finalPrice.round()} रुपये — यह एक पीस की कीमत है, या सभी $count की एक साथ?');
+  }
+
+  Future<void> _publish(int totalCount, {String priceUnit = 'piece'}) async {
     setState(() { _step = _Step.publishing; _error = null; });
     try {
       final artisanId = await ArtisanSession.artisanId;
@@ -162,6 +170,7 @@ class _PublishScreenState extends State<PublishScreen> {
         bandHighInr: widget.bandHighInr,
         stockType: _stockType ?? 'unique',
         totalCount: totalCount,
+        priceUnit: priceUnit,
       );
       if (!mounted) return;
       setState(() {
@@ -200,6 +209,8 @@ class _PublishScreenState extends State<PublishScreen> {
         return _stockTypeView();
       case _Step.batchCount:
         return _batchCountView();
+      case _Step.priceUnit:
+        return _priceUnitView();
       case _Step.publishing:
         return const Center(child: CircularProgressIndicator(color: _accent));
       case _Step.done:
@@ -346,7 +357,7 @@ class _PublishScreenState extends State<PublishScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _countDigits.isNotEmpty && int.parse(_countDigits) > 0
-                    ? () => _publish(int.parse(_countDigits))
+                    ? () => _enterPriceUnit(int.parse(_countDigits))
                     : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _accent, foregroundColor: Colors.white,
@@ -356,6 +367,43 @@ class _PublishScreenState extends State<PublishScreen> {
                 child: const Text('List for sale', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _priceUnitView() {
+    final price = _finalPrice.round();
+    // The floor is per piece; for a set the comparison is against all of them.
+    final setFloor = widget.floorInr == null ? null : widget.floorInr! * _batchCount;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('₹$price किसकी कीमत है?',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF1F2937))),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(child: _tile('हर एक पीस का', Icons.looks_one_rounded,
+                    () => _publish(_batchCount, priceUnit: 'piece'))),
+                const SizedBox(width: 16),
+                Expanded(child: _tile('सभी $_batchCount का', Icons.inventory_2_rounded,
+                    () => _publish(_batchCount, priceUnit: 'set'))),
+              ],
+            ),
+            if (setFloor != null && _finalPrice < setFloor) ...[
+              const SizedBox(height: 16),
+              Text(
+                'अगर ₹$price सभी $_batchCount का है, तो यह उनकी लागत (लगभग ₹${setFloor.round()}) से कम है',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF92400E)),
+              ),
+            ],
           ],
         ),
       ),

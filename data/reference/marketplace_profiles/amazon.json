@@ -1,0 +1,37 @@
+{
+  "display_name": "Amazon (incl. Amazon Karigar)",
+  "format": "xlsx",
+  "sheet_name": "Template",
+  "verified_on": "2026-09-11",
+  "about": [
+    "Amazon's upload templates are category-specific and change without notice. These are the commonly documented core flat-file columns, plus Amazon.in's hsn_code and maximum_retail_price.",
+    "Download your category's template in Seller Central (Inventory > Add Products via Upload) and copy these values into it. Column names in your downloaded template win over the ones here.",
+    "Yellow cells are details KaarigarAI doesn't collect: fill them before uploading."
+  ],
+  "sources": [
+    "https://captenamz.com/blog/how-to-download-inventory-flat-file-on-amazon/",
+    "https://sell.amazon.in/seller-blog/all-you-need-to-know-about-hsn-code",
+    "https://1matrix.io/core-pages/amazon-india-seller-guide/amazon-seller-account-setup-india/gtin-exemption-amazon-india-how-to-get-approved/"
+  ],
+  "columns": [
+    {"header": "feed_product_type", "not_collected": "the product type Amazon uses for your category; pick it from your downloaded template"},
+    {"header": "item_sku", "value": "{listing_id}"},
+    {"header": "brand_name", "not_collected": "your brand name as printed on the product or its packaging (a GTIN exemption needs photos showing it)"},
+    {"header": "item_name", "value": "{title_en}"},
+    {"header": "external_product_id", "not_collected": "barcode (GTIN/EAN). Handmade items without one can apply for a GTIN exemption in Seller Central"},
+    {"header": "external_product_id_type", "not_collected": "EAN, UPC or GTIN, matching the barcode above; leave empty if you have a GTIN exemption"},
+    {"header": "standard_price", "value": "{price_inr}"},
+    {"header": "maximum_retail_price", "value": "{price_inr}", "note": "set to your listing price; if the product has a printed MRP, use that instead (standard_price can't be above it)"},
+    {"header": "quantity", "value": "{remaining_count}"},
+    {"header": "main_image_url", "value": "{image_url}", "if_empty": "no photo on this listing", "note": "the product cut out on a white background, as Amazon asks for main images (unless the cut-out failed, then the photo as taken)"},
+    {"header": "other_image_url1", "value": "{texture_url}", "if_empty": "no close-up for this listing"},
+    {"header": "product_description", "value": "{description_en}"},
+    {"header": "bullet_point1", "value": "Material: {material}", "if_empty": "material wasn't confirmed for this listing"},
+    {"header": "bullet_point2", "value": "Handmade in India"},
+    {"header": "generic_keywords", "value": "{keywords}"},
+    {"header": "material_type", "value": "{material}", "if_empty": "material wasn't confirmed for this listing"},
+    {"header": "hsn_code", "not_collected": "the GST HSN code for your product"},
+    {"header": "country_of_origin", "value": "India"},
+    {"header": "manufacturer", "not_collected": "your name or business name"}
+  ]
+}

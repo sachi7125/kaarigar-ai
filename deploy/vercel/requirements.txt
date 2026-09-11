@@ -1,0 +1,12 @@
+# The buyer-facing app only (backend/app/public_main.py). No speech, vision
+# or pricing packages — backend/tests/test_public_app.py checks none of them
+# get imported.
+fastapi>=0.111
+python-multipart>=0.0.9   # FastAPI checks for it when the storefront module's upload route is defined
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+jinja2>=3.1
+pydantic>=2.7
+email-validator>=2.1
+python-dotenv>=1.0
+pyyaml>=6.0

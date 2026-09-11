@@ -9,6 +9,13 @@ estimate all the way through unverified; this is the one place that checks
 
 The listing's photo/audio are looked up by `client_id` from what `/api/sync`
 (Day 3) already saved to `data/uploads/` — no third upload of the same files.
+
+Day 7: publishing and renaming need her device token (app/auth.py). At
+publish the photo is also copied, downscaled, into the database
+(app/services/photos.py), so buyer pages can show it wherever the database
+lives — including the Vercel deployment, which has no disk. The single
+generic export bundle is replaced by one export per marketplace
+(app/services/marketplace_export.py), built only when she taps it.
 """
 from __future__ import annotations
 
@@ -20,14 +27,16 @@ from pathlib import Path
 import qrcode
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
-from openpyxl import Workbook
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.config import cfg_get
+from app.auth import ensure_owner, require_artisan
+from app.config import PUBLIC_URL
 from app.db.models import Artisan, Listing
 from app.db.session import get_db
+from app.services.marketplace_export import UnknownMarketplace, available_marketplaces, build_export
+from app.services.photos import listing_photo_bytes, listing_texture_bytes, store_listing_photo
 from pipelines.voice.transcribe import transcribe
 from pipelines.voice.glossary import correct as glossary_correct
 from pipelines.voice.pii_strip import strip_pii
@@ -75,40 +84,56 @@ class PublishRequest(BaseModel):
     band_high_inr: float | None = None
     stock_type: str = "unique"   # "unique" | "batch"
     total_count: int = 1
+    # Day 7: for a batch, whether price_inr is for each piece or for all
+    # total_count pieces together (sold as one lot).
+    price_unit: str = "piece"    # "piece" | "set"
 
 
 @router.post("/listings")
-def publish_listing(req: PublishRequest, db: Session = Depends(get_db)):
-    artisan = db.query(Artisan).filter(Artisan.id == req.artisan_id).first()
-    if artisan is None:
-        raise HTTPException(status_code=404, detail="unknown artisan")
-    if not artisan.verified:
+def publish_listing(req: PublishRequest, db: Session = Depends(get_db),
+                    me: Artisan = Depends(require_artisan)):
+    ensure_owner(me, req.artisan_id)
+    if not me.verified:
         raise HTTPException(status_code=403,
                             detail="artisan not verified — publishing is blocked until phone verification")
     if req.stock_type not in ("unique", "batch"):
         raise HTTPException(status_code=400, detail="stock_type must be 'unique' or 'batch'")
+    if req.price_unit not in ("piece", "set"):
+        raise HTTPException(status_code=400, detail="price_unit must be 'piece' or 'set'")
 
-    total = 1 if req.stock_type == "unique" else max(1, req.total_count)
+    count = max(1, req.total_count)
+    if req.price_unit == "set":
+        # The whole batch at one price: one lot of `count` pieces.
+        stock_type, pack_size, total = "unique", count, 1
+    else:
+        stock_type, pack_size = req.stock_type, 1
+        total = 1 if stock_type == "unique" else count
+
+    image_path = _find_upload(req.client_id, "image")
     listing = Listing(
-        artisan_id=artisan.id,
+        artisan_id=me.id,
         category=req.category, material=req.material, size_class=req.size_class,
         title_en=req.title_en, title_hi=req.title_hi,
         description_en=req.description_en, description_hi=req.description_hi,
-        image_path=_find_upload(req.client_id, "image"),
+        image_path=image_path,
         audio_path=_find_upload(req.client_id, "audio"),
         price_inr=req.price_inr, band_low_inr=req.band_low_inr, band_high_inr=req.band_high_inr,
-        stock_type=req.stock_type, total_count=total, remaining_count=total,
+        stock_type=stock_type, total_count=total, remaining_count=total,
+        price_unit=req.price_unit, pack_size=pack_size,
     )
     db.add(listing)
+    db.flush()  # assigns listing.id
+    if image_path:
+        store_listing_photo(db, listing.id, image_path)
     db.commit()
     db.refresh(listing)
 
-    url_base = cfg_get("listings.url_base", "https://kaarigar.in")
-    return {"listing_id": listing.id, "url": f"{url_base}/l/{listing.id}"}
+    return {"listing_id": listing.id, "url": f"{PUBLIC_URL}/l/{listing.id}"}
 
 
 @router.post("/listings/rename_by_voice")
-async def rename_by_voice(audio: UploadFile = File(...), lang: str = Form("hi")):
+async def rename_by_voice(audio: UploadFile = File(...), lang: str = Form("hi"),
+                          _me: Artisan = Depends(require_artisan)):
     """A short voice note -> a bilingual title, for renaming a listing either
     before or after publish (raised by the user: 'allow user to edit name of
     the listing before listing and also after'). Reuses `describe()` — the
@@ -134,13 +159,12 @@ class RenameRequest(BaseModel):
 
 
 @router.patch("/listings/{listing_id}")
-def rename_listing(listing_id: str, req: RenameRequest, db: Session = Depends(get_db)):
+def rename_listing(listing_id: str, req: RenameRequest, db: Session = Depends(get_db),
+                   me: Artisan = Depends(require_artisan)):
     """Post-publish rename — same two fields PublishRequest already carries,
-    just editable afterwards too. No ownership check beyond the listing
-    existing (matches the rest of this prototype's auth model — see D-onboarding:
-    deferred verification, no session tokens)."""
+    just editable afterwards too. Only on her own listings (Day 7)."""
     listing = db.query(Listing).filter(Listing.id == listing_id).first()
-    if listing is None:
+    if listing is None or listing.artisan_id != me.id:
         raise HTTPException(status_code=404, detail="listing not found")
     title_en = req.title_en.strip()
     title_hi = req.title_hi.strip()
@@ -166,6 +190,7 @@ def get_listing(listing_id: str, db: Session = Depends(get_db)):
         "band_low_inr": listing.band_low_inr, "band_high_inr": listing.band_high_inr,
         "stock_type": listing.stock_type, "total_count": listing.total_count,
         "remaining_count": listing.remaining_count, "status": listing.status,
+        "price_unit": listing.price_unit, "pack_size": listing.pack_size,
         "artisan_verified": listing.artisan.verified,
     }
 
@@ -176,7 +201,8 @@ def list_artisan_listings(artisan_id: str, db: Session = Depends(get_db)):
     listings = db.query(Listing).filter(Listing.artisan_id == artisan_id).all()
     return [
         {"id": l.id, "title_en": l.title_en, "price_inr": l.price_inr,
-         "remaining_count": l.remaining_count, "total_count": l.total_count, "status": l.status}
+         "remaining_count": l.remaining_count, "total_count": l.total_count, "status": l.status,
+         "price_unit": l.price_unit, "pack_size": l.pack_size}
         for l in listings
     ]
 
@@ -205,10 +231,26 @@ def share_card(listing_id: str, db: Session = Depends(get_db)):
     card = Image.new("RGB", (W, H), "#F3F4F6")
 
     photo_h = 780
-    placeholder = Image.new("RGB", (W, photo_h), "#E5E7EB")
-    card.paste(placeholder, (0, 0))
-    if listing.image_path and Path(listing.image_path).exists():
-        photo = Image.open(listing.image_path).convert("RGB")
+    stored = listing_photo_bytes(db, listing)
+    texture = listing_texture_bytes(db, listing)
+    closeup_caption_at = None
+    if stored is not None and texture is not None:
+        # The enhanced pair (Day 7; the same two views scripts/try_photo.py
+        # shows): the product cut out on white filling the left of the band,
+        # and its surface close-up on the right. Both are square by
+        # construction (pipelines.image.enhance crops them so).
+        card.paste(Image.new("RGB", (W, photo_h), "white"), (0, 0))
+        main = Image.open(io.BytesIO(stored[0])).convert("RGB").resize((photo_h - 20, photo_h - 20))
+        card.paste(main, (10, 10))
+        side = W - photo_h - 20
+        close_y = (photo_h - side) // 2 - 20
+        closeup = Image.open(io.BytesIO(texture)).convert("RGB").resize((side, side))
+        card.paste(closeup, (photo_h + 10, close_y))
+        closeup_caption_at = (photo_h + 10, close_y + side + 12)
+    else:
+        card.paste(Image.new("RGB", (W, photo_h), "#E5E7EB"), (0, 0))
+    if stored is not None and texture is None:
+        photo = Image.open(io.BytesIO(stored[0])).convert("RGB")
         # Contain-fit, not cover-fit: a real phone photo is usually portrait
         # (taller than wide) while this band is landscape-shaped, so a
         # center-crop-to-fill was cutting off the top/bottom of the actual
@@ -226,15 +268,21 @@ def share_card(listing_id: str, db: Session = Depends(get_db)):
     price_font = ImageFont.load_default(size=64)
     small_font = ImageFont.load_default(size=24)
     hi_font = _devanagari_font(38)
-    url_base = cfg_get("listings.url_base", "https://kaarigar.in")
+    if closeup_caption_at is not None:
+        draw.text(closeup_caption_at, "Close-up", fill="#6B7280", font=small_font)
 
     text_y = photo_h + 40
     draw.text((40, text_y), listing.title_en, fill="#1F2937", font=title_font)
     if hi_font is not None:
         draw.text((40, text_y + 56), listing.title_hi, fill="#6B7280", font=hi_font)
-    draw.text((40, photo_h + 150), f"Rs. {round(listing.price_inr)}", fill="#4F46E5", font=price_font)
+    price_text = f"Rs. {round(listing.price_inr)}"
+    draw.text((40, photo_h + 150), price_text, fill="#4F46E5", font=price_font)
+    if listing.price_unit == "set":
+        suffix_x = 40 + draw.textlength(price_text, font=price_font) + 16
+        draw.text((suffix_x, photo_h + 172), f"for a set of {listing.pack_size}",
+                  fill="#6B7280", font=small_font)
 
-    qr_img = qrcode.make(f"{url_base}/l/{listing.id}")
+    qr_img = qrcode.make(f"{PUBLIC_URL}/l/{listing.id}")
     qr_img = qr_img.resize((180, 180))
     card.paste(qr_img, (W - 220, photo_h + 70))
     # Storefront address under the per-listing QR (roadmap: "Share card keeps a
@@ -242,7 +290,7 @@ def share_card(listing_id: str, db: Session = Depends(get_db)):
     # still leads somewhere once this one listing sells out. Right-aligned to
     # the QR's own right edge; the id length varies, so measure rather than
     # assume a fixed x (a fixed one ran off the card).
-    shop_url = f"{url_base}/s/{listing.artisan_id}".replace("https://", "").replace("http://", "")
+    shop_url = f"{PUBLIC_URL}/s/{listing.artisan_id}".replace("https://", "").replace("http://", "")
     url_w = draw.textlength(shop_url, font=small_font)
     draw.text((W - 40 - url_w, photo_h + 262), shop_url, fill="#9CA3AF", font=small_font)
 
@@ -251,56 +299,27 @@ def share_card(listing_id: str, db: Session = Depends(get_db)):
     return Response(content=buf.getvalue(), media_type="image/png")
 
 
-@router.get("/listings/{listing_id}/export_bundle")
-def export_bundle(listing_id: str, db: Session = Depends(get_db)):
-    """Structured catalog data for GeM/ONDC/Amazon Karigar/ODOP-style onboarding
-    (decision D1) — a downloadable spreadsheet an artisan or an NGO facilitator
-    can hand to whichever of those programs she's pursuing, since none of them
-    expose a self-serve API a hackathon prototype could integrate live (they
-    need an already-KYC'd, approved seller account). This is a data HANDOFF,
-    not a live marketplace listing — see D1 and the session's own discussion
-    of why "just sell on Amazon" isn't buildable here.
+@router.get("/exports/marketplaces")
+def export_marketplaces():
+    """The marketplaces she can export a listing for, from the profile files."""
+    return available_marketplaces()
 
-    Fields left genuinely uncollected by this prototype (GST number, HSN
-    code, bank account) are marked "not collected" rather than left blank
-    with no explanation, so the sheet is honest about what still needs
-    filling in by hand."""
+
+@router.get("/listings/{listing_id}/export/{marketplace}")
+def export_listing(listing_id: str, marketplace: str, db: Session = Depends(get_db)):
+    """One listing in one marketplace's format, built in memory when she taps
+    it and streamed back — never generated ahead of time or kept on the server
+    (raised by the user: "only create when user clicks"). Only public listing
+    data goes in, so like the listing page itself it needs no sign-in."""
     listing = db.query(Listing).filter(Listing.id == listing_id).first()
     if listing is None:
         raise HTTPException(status_code=404, detail="listing not found")
-    artisan = listing.artisan
-    url_base = cfg_get("listings.url_base", "https://kaarigar.in")
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Catalog"
-    headers = [
-        "Listing ID", "Title (EN)", "Title (HI)", "Description (EN)", "Description (HI)",
-        "Category", "Material", "Size", "Price (INR)", "Stock type", "Available quantity",
-        "Product image URL", "Listing page URL", "Artisan ID", "Artisan phone verified",
-        "GSTIN", "HSN code", "Bank account for payout",
-    ]
-    ws.append(headers)
-    image_url = f"{url_base}/media/{Path(listing.image_path).name}" if listing.image_path else "not collected"
-    ws.append([
-        listing.id, listing.title_en, listing.title_hi,
-        listing.description_en, listing.description_hi,
-        listing.category, listing.material, listing.size_class,
-        listing.price_inr, listing.stock_type, listing.remaining_count,
-        image_url, f"{url_base}/l/{listing.id}",
-        artisan.id, "yes" if artisan.verified else "no",
-        "not collected — this prototype does not capture GST registration",
-        "not collected — assign per marketplace's own category taxonomy",
-        "not collected — no payment/payout flow in this prototype (out of scope, decisions.md)",
-    ])
-    for col in ws.columns:
-        width = max(len(str(c.value)) for c in col if c.value is not None)
-        ws.column_dimensions[col[0].column_letter].width = min(max(width + 2, 12), 60)
-
-    buf = io.BytesIO()
-    wb.save(buf)
+    try:
+        body, media_type, filename = build_export(listing, marketplace)
+    except UnknownMarketplace:
+        raise HTTPException(status_code=404, detail=f"no export format for {marketplace!r}")
     return Response(
-        content=buf.getvalue(),
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="kaarigar_export_{listing.id}.xlsx"'},
+        content=body, media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"',
+                 "Cache-Control": "no-store"},
     )

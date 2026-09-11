@@ -7,6 +7,7 @@ import '../../services/onboarding_client.dart';
 import '../../services/artisan_session.dart';
 import '../../widgets/numeric_keypad.dart';
 import '../home_screen.dart';
+import 'otp_screen.dart';
 
 const _accent = Color(0xFF4F46E5);
 
@@ -49,11 +50,28 @@ class _PhoneScreenState extends State<PhoneScreen> {
     final phone = '+91$_digits';
     try {
       final result = await OnboardingClient.register(phone: phone, language: widget.language);
+      final token = result['auth_token'] as String?;
       await ArtisanSession.save(
         artisanId: result['artisan_id'], phone: phone,
-        language: widget.language, verified: false,
+        language: widget.language, verified: result['verified'] == true, authToken: token,
       );
       if (!mounted) return;
+      if (token == null) {
+        // This number already has a shop (Day 7): the phone must prove it's
+        // hers with the OTP before the shop opens on it.
+        final ok = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(builder: (_) => OtpScreen(phone: phone, language: widget.language)),
+        );
+        if (!mounted) return;
+        if (ok != true) {
+          setState(() {
+            _error = 'इस नंबर की दुकान पहले से है — खोलने के लिए कोड डालिए।';
+            _submitting = false;
+          });
+          return;
+        }
+      }
       Navigator.pushAndRemoveUntil(
         context, MaterialPageRoute(builder: (_) => const HomeScreen()), (route) => false,
       );

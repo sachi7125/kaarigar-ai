@@ -46,8 +46,13 @@ saree,sari|saaree|sadi
 patila,pateela|patheela|pateela
 # --- Devanagari: objects & materials ---
 बर्तन,बर्दन|बरतन|बर्थन|बरदन
-मटकी,मटकि|मटकी़|मटकीं
-दीया,दिया|दीय|दिय
+मटकी,मटकि|मटकी़|मटकीं|मत्की
+# "दिया" (the everyday verb "gave"), its fragment "दिय" (which fuzzy-matched
+# "दिया" at 0.86), and "सारी" ("all") were removed as variants on 11 Sep: they
+# are far more common as ordinary words than as mishearings, and rewriting them
+# corrupted listing text — "मेरी सारी चप्पलें" became "मेरी साड़ी चप्पलें". A
+# lamp spelled दिया is simply left as she said it.
+दीया,दीय
 मिट्टी,मिटटी|मिट्टि|मिटी
 पीतल,पितल|पीतळ|पीटल
 तांबा,तामबा|ताँबा|तांबॉ
@@ -56,7 +61,8 @@ patila,pateela|patheela|pateela
 रेशम,रेशम्|रेषम
 चांदी,चादी|चाँदी|चांदि|चान्दी
 लकड़ी,लकडी|लकडि|लकड़ि
-साड़ी,साडी|सारी|साड़ि
+साड़ी,साडी|साड़ि
 दुपट्टा,दुपटा|दुप्पट्टा
 पतीला,पतिला|पतीले|पटीला
 हस्तनिर्मित,हस्तनिर्मीत|हसतनिर्मित
+चप्पल,चपल

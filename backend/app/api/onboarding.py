@@ -10,6 +10,11 @@ and a real 5-minute expiry, but hands the code straight back in the response
 instead of dispatching an SMS. The app then speaks it aloud immediately,
 exactly what "OTP read aloud" would look like once a real SMS is wired in —
 this is a disclosed prototype shortcut, not a hidden one (see decisions.md).
+
+Day 7: both steps can hand the phone its device token (app/auth.py).
+Registering a NEW number returns one straight away, so deferred verification
+still works. Registering a number that already has a shop returns none: that
+phone must prove it's hers by OTP first, and verify_otp issues the token.
 """
 from __future__ import annotations
 
@@ -19,6 +24,7 @@ import secrets
 from fastapi import APIRouter, Depends, Form, HTTPException
 from sqlalchemy.orm import Session
 
+from app.auth import issue_token
 from app.db.models import Artisan
 from app.db.session import get_db
 
@@ -31,15 +37,18 @@ _otp_store: dict[str, tuple[str, datetime.datetime]] = {}  # phone -> (otp, expi
 @router.post("/onboarding/register")
 def register(phone: str = Form(...), language: str = Form("hi"), db: Session = Depends(get_db)):
     artisan = db.query(Artisan).filter(Artisan.phone == phone).first()
+    token = None
     if artisan is None:
         artisan = Artisan(phone=phone, language=language)
+        token = issue_token(artisan)
         db.add(artisan)
         db.commit()
         db.refresh(artisan)
     else:
         artisan.language = language
         db.commit()
-    return {"artisan_id": artisan.id, "language": artisan.language, "verified": artisan.verified}
+    return {"artisan_id": artisan.id, "language": artisan.language, "verified": artisan.verified,
+            "auth_token": token, "needs_otp": token is None}
 
 
 @router.post("/onboarding/send_otp")
@@ -64,6 +73,7 @@ def verify_otp(phone: str = Form(...), otp: str = Form(...), db: Session = Depen
         raise HTTPException(status_code=404, detail="unknown phone — call /onboarding/register first")
 
     artisan.verified = True
+    token = issue_token(artisan)
     db.commit()
     del _otp_store[phone]
-    return {"artisan_id": artisan.id, "verified": True}
+    return {"artisan_id": artisan.id, "verified": True, "auth_token": token}

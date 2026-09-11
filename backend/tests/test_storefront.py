@@ -44,7 +44,7 @@ def test_dashboard_aggregates_are_real_not_placeholders(db_session):
     db_session.add(Follower(artisan_id=artisan.id, email="f2@x.com"))
     db_session.commit()
 
-    d = storefront.storefront_dashboard(artisan.id, db_session)
+    d = storefront.storefront_dashboard(artisan.id, db_session, artisan)
     assert d["listings_count"] == 2
     assert d["published_count"] == 1
     assert d["sold_out_count"] == 1
@@ -57,11 +57,12 @@ def test_dashboard_aggregates_are_real_not_placeholders(db_session):
 
 def test_dashboard_on_artisan_with_nothing_yet(db_session):
     artisan = _make_artisan(db_session)
-    d = storefront.storefront_dashboard(artisan.id, db_session)
+    d = storefront.storefront_dashboard(artisan.id, db_session, artisan)
     assert d == {
         "listings_count": 0, "published_count": 0, "sold_out_count": 0,
         "pending_offers_count": 0, "accepted_offers_count": 0,
         "total_earning_inr": 0, "remaining_stock_total": 0, "follower_count": 0,
+        "nudge": None,
     }
 
 

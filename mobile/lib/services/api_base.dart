@@ -1,10 +1,23 @@
 // Shared backend host resolution for every API client. (Day 4)
 
-// Every target — Android emulator, a real Android device over
-// `adb reverse tcp:8000 tcp:8000`, and iOS Simulator (shares the host's
-// network) — reaches the backend at its OWN localhost:8000. For the emulator
-// specifically, `adb reverse` is equivalent to its usual 10.0.2.2 special
-// alias, so one code path now covers all three instead of branching on
-// platform; a real device over Wi-Fi (no USB/adb reverse) would still need
-// the host's LAN IP instead.
-String get apiBaseUrl => 'http://localhost:8000/api';
+// Default: the phone's OWN localhost:8000 — a real Android device reaches the
+// Mac through `adb reverse tcp:8000 tcp:8000`, the emulator the same way, and
+// the iOS Simulator shares the host's network. Day 7: for the Wi-Fi demo with
+// no cable, build with the Mac's address instead (scripts/run_server.sh lan
+// prints it):
+//   flutter run --dart-define=KAARIGAR_API=http://192.168.1.5:8000/api
+const String _apiOverride = String.fromEnvironment('KAARIGAR_API');
+
+String get apiBaseUrl => _apiOverride.isNotEmpty ? _apiOverride : 'http://localhost:8000/api';
+
+/// Thrown by the API clients on HTTP 401 (Day 7): this phone's sign-in token is
+/// missing, or it was replaced because her number was verified on another
+/// phone. Screens catch it and offer to verify the number again.
+class SignInRequired implements Exception {
+  @override
+  String toString() => 'इस फ़ोन पर नंबर फिर से पक्का करना होगा।';
+}
+
+void throwIfSignedOut(int statusCode) {
+  if (statusCode == 401) throw SignInRequired();
+}

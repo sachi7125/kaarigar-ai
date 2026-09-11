@@ -2,9 +2,13 @@
 
 Serves the JSON API for the mobile app AND renders the public storefront and
 listing pages. AI work is dispatched to workers behind a job queue, never inline.
-Roadmap: Days 1-6 done (onboarding, listing page, offers, storefront + market linkage).
+Roadmap: Days 1-7 done (onboarding, listing page, offers, storefront + market
+linkage, hardening).
+
+This is the full app, run on the demo Mac (scripts/run_server.sh). The Vercel
+deployment runs app/public_main.py instead: the buyer pages and buyer actions
+only, without the speech/vision/pricing stack or any artisan-only endpoint.
 """
-import os
 import sys
 from pathlib import Path
 
@@ -18,7 +22,6 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 
 from app.db.session import init_db
 from app.api.sync import router as sync_router
@@ -27,6 +30,8 @@ from app.api.onboarding import router as onboarding_router
 from app.api.listings import router as listings_router
 from app.api.offers import router as offers_router
 from app.api.storefront import router as storefront_api_router
+from app.api.schemes import router as schemes_router
+from app.web.media import router as media_router
 from app.web.storefront_page import router as storefront_router
 
 app = FastAPI(title="KaarigarAI API")
@@ -44,15 +49,12 @@ app.include_router(onboarding_router, prefix="/api")
 app.include_router(listings_router, prefix="/api")
 app.include_router(offers_router, prefix="/api")
 app.include_router(storefront_api_router, prefix="/api")
+app.include_router(schemes_router, prefix="/api")
 
 # Public web pages (permanent URLs, no /api prefix — e.g. GET /l/<listing_id>)
 app.include_router(storefront_router)
 
-# Listing photos, served directly from local disk. The architecture doc calls
-# for real object storage ("never from the app host") — none is configured
-# (no S3/GCS credentials), so this is a disclosed prototype substitute, not a
-# silent one. Swapping in real object storage only changes Listing.image_path
-# to a full URL and removes this mount.
-_UPLOADS_DIR = _REPO_ROOT / "backend" / "data" / "uploads"
-os.makedirs(_UPLOADS_DIR, exist_ok=True)
-app.mount("/media", StaticFiles(directory=str(_UPLOADS_DIR)), name="media")
+# Listing photos at /media/listing/<id>, read from the database (Day 7). This
+# used to be a StaticFiles mount of backend/data/uploads/, which also exposed
+# the voice recordings stored alongside the photos.
+app.include_router(media_router)

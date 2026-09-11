@@ -19,7 +19,13 @@ session, each call self-contained:
   - GET  /storefront/{artisan_id}/qr — a PNG QR code encoding the permanent
     storefront URL, for the stall poster.
   - GET  /storefront/{artisan_id}/dashboard — real aggregates: listing/offer
-    counts, total accepted-offer earnings, remaining stock, follower count.
+    counts, total accepted-offer earnings, remaining stock, follower count,
+    and (Day 7) the no-offers-for-a-week nudge.
+
+Day 7: maker story, digest preview and dashboard need her device token
+(app/auth.py) — earnings are "only in her view". Follow is also served by the
+public Vercel app (app/public_main.py), so this module keeps its speech and
+QR imports inside the functions that use them.
 """
 from __future__ import annotations
 
@@ -28,19 +34,16 @@ import io
 import os
 import tempfile
 
-import qrcode
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
-from app.config import cfg_get
+from app.auth import ensure_owner, require_artisan
+from app.config import PUBLIC_URL
 from app.db.models import Artisan, Follower, Listing, Offer
 from app.db.session import get_db
-from pipelines.voice.transcribe import transcribe
-from pipelines.voice.glossary import correct as glossary_correct
-from pipelines.voice.pii_strip import strip_pii
-from pipelines.voice.maker_story import build_maker_story
+from app.services.nudge import no_offers_nudge
 
 router = APIRouter()
 
@@ -53,7 +56,7 @@ def _save_upload(f: UploadFile, suffix: str) -> str:
 
 
 def _storefront_url(artisan_id: str) -> str:
-    return f"{cfg_get('listings.url_base', 'https://kaarigar.in')}/s/{artisan_id}"
+    return f"{PUBLIC_URL}/s/{artisan_id}"
 
 
 def _one_week_ago() -> datetime.datetime:
@@ -66,10 +69,13 @@ async def record_maker_story(
     audio: UploadFile = File(...),
     lang: str = Form("hi"),
     db: Session = Depends(get_db),
+    me: Artisan = Depends(require_artisan),
 ):
-    artisan = db.query(Artisan).filter(Artisan.id == artisan_id).first()
-    if artisan is None:
-        raise HTTPException(status_code=404, detail="unknown artisan")
+    ensure_owner(me, artisan_id)
+    from pipelines.voice.glossary import correct as glossary_correct
+    from pipelines.voice.maker_story import build_maker_story
+    from pipelines.voice.pii_strip import strip_pii
+    from pipelines.voice.transcribe import transcribe
 
     audio_path = _save_upload(audio, ".m4a")
     try:
@@ -80,8 +86,8 @@ async def record_maker_story(
     finally:
         os.unlink(audio_path)
 
-    artisan.maker_story_text_en = story.text_en
-    artisan.maker_story_text_hi = story.text_hi
+    me.maker_story_text_en = story.text_en
+    me.maker_story_text_hi = story.text_hi
     db.commit()
     return {"text_en": story.text_en, "text_hi": story.text_hi, "source": story.source}
 
@@ -92,6 +98,7 @@ def _listing_dict(l: Listing) -> dict:
         "price_inr": l.price_inr, "status": l.status,
         "stock_type": l.stock_type, "total_count": l.total_count,
         "remaining_count": l.remaining_count,
+        "price_unit": l.price_unit, "pack_size": l.pack_size,
     }
 
 
@@ -149,15 +156,14 @@ def follow_artisan(req: FollowRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/storefront/{artisan_id}/digest_preview")
-def digest_preview(artisan_id: str, db: Session = Depends(get_db)):
+def digest_preview(artisan_id: str, db: Session = Depends(get_db),
+                   me: Artisan = Depends(require_artisan)):
     """The content a weekly follower digest email WOULD contain — real data,
     genuinely assembled, even though actual SMTP dispatch is mocked (no
     provider budgeted; same disclosed-shortcut pattern as D18's OTP). Lets a
     demo show "here is what she gets sent" honestly, without claiming email
     delivery that isn't wired up."""
-    artisan = db.query(Artisan).filter(Artisan.id == artisan_id).first()
-    if artisan is None:
-        raise HTTPException(status_code=404, detail="unknown artisan")
+    ensure_owner(me, artisan_id)
 
     since = _one_week_ago()
     new_listings = (
@@ -179,6 +185,8 @@ def digest_preview(artisan_id: str, db: Session = Depends(get_db)):
 
 @router.get("/storefront/{artisan_id}/qr")
 def storefront_qr(artisan_id: str, db: Session = Depends(get_db)):
+    import qrcode
+
     artisan = db.query(Artisan).filter(Artisan.id == artisan_id).first()
     if artisan is None:
         raise HTTPException(status_code=404, detail="unknown artisan")
@@ -190,10 +198,9 @@ def storefront_qr(artisan_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/storefront/{artisan_id}/dashboard")
-def storefront_dashboard(artisan_id: str, db: Session = Depends(get_db)):
-    artisan = db.query(Artisan).filter(Artisan.id == artisan_id).first()
-    if artisan is None:
-        raise HTTPException(status_code=404, detail="unknown artisan")
+def storefront_dashboard(artisan_id: str, db: Session = Depends(get_db),
+                         me: Artisan = Depends(require_artisan)):
+    ensure_owner(me, artisan_id)
 
     listings = db.query(Listing).filter(Listing.artisan_id == artisan_id).all()
     listing_ids = [l.id for l in listings]
@@ -216,4 +223,5 @@ def storefront_dashboard(artisan_id: str, db: Session = Depends(get_db)):
         "total_earning_inr": sum(o.price_inr * o.quantity for o in accepted_offers),
         "remaining_stock_total": sum(l.remaining_count for l in listings),
         "follower_count": follower_count,
+        "nudge": no_offers_nudge(db, me),
     }

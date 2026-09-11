@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="url">kaarigar.in/s/{{ artisan.id }}</div>
+    <div class="url">{{ public_host }}/s/{{ artisan.id }}</div>
     {% if artisan.verified %}
       <div class="badge">✓ verified artisan</div>
     {% endif %}
@@ -86,14 +86,14 @@
     {% if listings %}
       {% for l in listings %}
         <a class="listing-card" href="/l/{{ l.id }}">
-          {% if l.image_path %}
-            <img class="listing-photo" src="/media/{{ l.image_path.split('/')[-1] }}" alt="">
+          {% if l.id in photo_ids %}
+            <img class="listing-photo" src="/media/listing/{{ l.id }}" alt="">
           {% else %}
             <div class="listing-photo"></div>
           {% endif %}
           <div class="listing-info">
             <div class="listing-title">{{ l.title_en }}</div>
-            <div class="listing-price">₹{{ "%.0f"|format(l.price_inr) }}</div>
+            <div class="listing-price">₹{{ "%.0f"|format(l.price_inr) }}{% if l.price_unit == "set" %}<span class="listing-status"> · set of {{ l.pack_size }}</span>{% endif %}</div>
             {% if l.status == "sold_out" %}
               <div class="listing-status sold-out">Sold out</div>
             {% elif l.stock_type == "batch" %}

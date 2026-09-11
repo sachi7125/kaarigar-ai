@@ -1,0 +1,53 @@
+{
+  "id": "pm_vishwakarma",
+  "name_en": "PM Vishwakarma",
+  "name_hi": "प्रधानमंत्री विश्वकर्मा योजना",
+  "checked_on": "2026-09-11",
+  "sources": [
+    "https://pmvishwakarma.gov.in/",
+    "https://pmvishwakarma.gov.in/CDN/MiscFiles/Registration%20e-Booklet.pdf",
+    "https://www.pib.gov.in/PressNoteDetails.aspx?NoteId=155216&ModuleId=3&reg=3&lang=2"
+  ],
+  "benefits_en": [
+    "PM Vishwakarma certificate and ID card",
+    "Basic skill training of 5–7 days with a stipend of ₹500 a day; optional 15-day advanced training",
+    "Toolkit incentive of ₹15,000, as an e-voucher",
+    "Loans of up to ₹1 lakh (repaid over 18 months), then up to ₹2 lakh (30 months), at 5% interest",
+    "₹1 per digital transaction, for up to 100 transactions a month",
+    "Marketing support: quality certification, branding, e-commerce linkage, trade fairs"
+  ],
+  "benefits_hi": [
+    "प्रधानमंत्री विश्वकर्मा प्रमाण पत्र और पहचान पत्र",
+    "5–7 दिन की बुनियादी ट्रेनिंग, रोज़ ₹500 भत्ते के साथ; चाहें तो 15 दिन की एडवांस ट्रेनिंग",
+    "औज़ारों के लिए ₹15,000 का ई-वाउचर",
+    "5% ब्याज पर पहले ₹1 लाख तक (18 महीने में चुकाना), फिर ₹2 लाख तक (30 महीने) का लोन",
+    "हर डिजिटल लेन-देन पर ₹1, महीने में 100 लेन-देन तक",
+    "बिक्री में मदद: गुणवत्ता प्रमाणन, ब्रांडिंग, ई-कॉमर्स से जुड़ाव, व्यापार मेले"
+  ],
+  "eligibility_en": [
+    "A self-employed artisan working with hands and tools in one of the scheme's 18 traditional trades",
+    "18 or older on the day of registration",
+    "No loan under PMEGP, PM SVANidhi or Mudra in the last 5 years",
+    "One member per family; government employees and their families can't apply"
+  ],
+  "eligibility_hi": [
+    "18 पारंपरिक कामों में से किसी एक में हाथ और औज़ारों से काम करने वाले स्वरोज़गार कारीगर",
+    "पंजीकरण के दिन उम्र 18 साल या ज़्यादा",
+    "पिछले 5 साल में PMEGP, PM स्वनिधि या मुद्रा से लोन न लिया हो",
+    "परिवार से एक ही सदस्य; सरकारी कर्मचारी और उनके परिवार नहीं"
+  ],
+  "how_to_apply_en": "Register free at a Common Service Centre (CSC). Registration uses biometric Aadhaar authentication; take your Aadhaar, mobile number and bank account details. The application is then verified in three steps: gram panchayat or urban local body, district, then a screening committee.",
+  "how_to_apply_hi": "पंजीकरण नज़दीकी कॉमन सर्विस सेंटर (CSC) पर मुफ़्त होता है, आधार और अंगूठे की पहचान से। आधार, मोबाइल नंबर और बैंक खाते की जानकारी साथ ले जाइए। फिर आवेदन की तीन जगह जाँच होती है: ग्राम पंचायत या नगर निकाय, ज़िला, और फिर एक समिति।",
+  "summary_hi": "इसमें पहचान पत्र, ट्रेनिंग के दौरान रोज़ 500 रुपये, औज़ारों के लिए 15,000 रुपये का ई-वाउचर, और 5 प्रतिशत ब्याज पर पहले 1 लाख, फिर 2 लाख रुपये तक का लोन मिलता है।",
+  "conditions_hi": "शर्तें: उम्र 18 साल या ज़्यादा हो, और पिछले 5 साल में मुद्रा, पीएमईजीपी या स्वनिधि से लोन न लिया हो।",
+  "trades": {
+    "clay pottery": {"trade_en": "Potter (Kumhaar)", "trade_hi": "कुम्हार", "match": "likely"},
+    "terracotta diya": {"trade_en": "Potter (Kumhaar)", "trade_hi": "कुम्हार", "match": "likely"},
+    "leather footwear": {"trade_en": "Cobbler / Shoesmith / Footwear artisan", "trade_hi": "मोची / जूते-चप्पल बनाने वाले कारीगर", "match": "likely"},
+    "wooden toy": {"trade_en": "Doll & Toy Maker (Traditional)", "trade_hi": "पारंपरिक गुड़िया और खिलौने बनाने वाले", "match": "likely"},
+    "bamboo basket": {"trade_en": "Basket / Mat / Broom Maker / Coir Weaver", "trade_hi": "टोकरी, चटाई, झाड़ू बनाने वाले", "match": "likely"},
+    "silver jewellery": {"trade_en": "Goldsmith (Sunar)", "trade_hi": "सुनार", "match": "possible"},
+    "brass idol": {"trade_en": "Sculptor (Moortikar)", "trade_hi": "मूर्तिकार", "match": "possible"},
+    "dhokra figurine": {"trade_en": "Sculptor (Moortikar)", "trade_hi": "मूर्तिकार", "match": "possible"}
+  }
+}

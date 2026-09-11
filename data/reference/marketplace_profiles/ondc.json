@@ -1,0 +1,45 @@
+{
+  "display_name": "ONDC (via your seller app)",
+  "format": "json",
+  "verified_on": "2026-09-11",
+  "about": "An ONDC catalog item for the seller app (seller network participant) that lists you on ONDC. KaarigarAI is not itself an ONDC participant. Field names follow the ONDC retail item object; your seller app may use a newer protocol version, so it has the final say. Values set to null are ones KaarigarAI doesn't collect: see fields_to_fill.",
+  "sources": [
+    "https://raw.githubusercontent.com/SetuHQ/api-references/main/commerce/ondc/retail.yaml",
+    "https://github.com/ONDC-Official/ONDC-Protocol-Specs"
+  ],
+  "fields_to_fill": [
+    {"field": "category_id", "why": "filled as Home & Decor for home crafts; for textiles, footwear, jewellery and bags your seller app assigns it"},
+    {"field": "price.maximum_value", "why": "MRP; set to your listing price, change it if the product has a printed MRP"},
+    {"field": "@ondc/org/returnable, @ondc/org/return_window", "why": "your return policy"},
+    {"field": "@ondc/org/cancellable", "why": "your cancellation policy"},
+    {"field": "@ondc/org/time_to_ship", "why": "how soon you can ship, as an ISO 8601 duration (e.g. P2D)"},
+    {"field": "@ondc/org/available_on_cod", "why": "whether you accept cash on delivery"},
+    {"field": "@ondc/org/contact_details_consumer_care", "why": "a contact for buyer queries"},
+    {"field": "@ondc/org/statutory_reqs_packaged_commodities", "why": "Legal Metrology packaging declarations: maker/packer name and address, net quantity, month and year of packing"}
+  ],
+  "template": {
+    "id": "{listing_id}",
+    "descriptor": {
+      "name": "{title_en}",
+      "short_desc": "{title_hi}",
+      "long_desc": "{description_en}",
+      "images": ["{image_url}", "{texture_url}"]
+    },
+    "price": {"currency": "INR", "value": "{price_inr_str}", "maximum_value": "{price_inr_str}"},
+    "quantity": {"available": {"count": "{remaining_count}"}, "maximum": {"count": "{remaining_count}"}},
+    "category_id": "{ondc_category_id}",
+    "@ondc/org/returnable": null,
+    "@ondc/org/return_window": null,
+    "@ondc/org/cancellable": null,
+    "@ondc/org/time_to_ship": null,
+    "@ondc/org/available_on_cod": null,
+    "@ondc/org/contact_details_consumer_care": null,
+    "@ondc/org/statutory_reqs_packaged_commodities": {
+      "manufacturer_or_packer_name": null,
+      "manufacturer_or_packer_address": null,
+      "common_or_generic_name_of_commodity": "{category}",
+      "net_quantity_or_measure_of_commodity_in_pkg": null,
+      "month_year_of_manufacture_packing_import": null
+    }
+  }
+}

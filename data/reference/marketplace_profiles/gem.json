@@ -1,0 +1,32 @@
+{
+  "display_name": "GeM (Government e-Marketplace)",
+  "format": "xlsx",
+  "sheet_name": "Catalogue",
+  "verified_on": "2026-09-11",
+  "about": [
+    "GeM catalogue uploads happen in the portal's own form: General Information > catalogue information > offer quantity and price > product specification > images. This sheet gathers those values in that order.",
+    "Per GeM's seller FAQ, GSTIN is not mandatory to register, and a personal PAN can be used for identity verification.",
+    "Put material and size in GeM's specification fields, not only in the description.",
+    "Yellow cells are details KaarigarAI doesn't collect: fill them in the portal."
+  ],
+  "sources": [
+    "https://gem.gov.in/userFaqs/seller"
+  ],
+  "columns": [
+    {"header": "Category / Sub-category", "not_collected": "choose GeM's category for your product during upload"},
+    {"header": "Product Name", "value": "{title_en}"},
+    {"header": "Product Description", "value": "{description_en}"},
+    {"header": "Brand Type", "value": "Unbranded", "note": "GeM accepts registered, unregistered or unbranded; change it if you have a brand"},
+    {"header": "Model", "value": "—", "note": "GeM's FAQ says to enter — when there's no model number"},
+    {"header": "HSN Code", "not_collected": "the GST HSN code for your product (mandatory on GeM)"},
+    {"header": "SKU ID", "value": "{listing_id}"},
+    {"header": "Material", "value": "{material}", "if_empty": "material wasn't confirmed for this listing"},
+    {"header": "Size", "value": "{size_class}", "if_empty": "size wasn't confirmed for this listing", "note": "GeM usually wants measurements; replace small/medium/large with dimensions"},
+    {"header": "Unit of Measurement", "value": "{uom}"},
+    {"header": "Offer Quantity", "value": "{remaining_count}"},
+    {"header": "Offer Price (per unit, INR)", "value": "{price_inr}"},
+    {"header": "Country of Origin", "value": "India"},
+    {"header": "Image URL", "value": "{image_url}", "if_empty": "no photo on this listing", "note": "GeM asks for clear photos on a white background, from several angles"},
+    {"header": "GSTIN", "value": "not required to register on GeM", "note": "PAN is enough to register; some categories may still ask for GSTIN"}
+  ]
+}

@@ -6,6 +6,11 @@ pending list) and only returned by `POST /offers/{id}/accept` — "contact
 details are exchanged only after the artisan accepts" (wireframe screen 6).
 Auto-declined offers are stored (for the count) but never appear in the
 pending list — she sees that the shield worked, not the offers themselves.
+
+Day 7: listing, accepting and declining offers need her device token
+(app/auth.py), and only work on offers for her own listings. Submitting an
+offer and reporting an issue stay open to any buyer; those two are also what
+the public Vercel app serves (app/public_main.py).
 """
 from __future__ import annotations
 
@@ -15,8 +20,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.auth import ensure_owner, require_artisan
 from app.config import cfg_get
-from app.db.models import Listing, Offer, IssueReport
+from app.db.models import Artisan, Listing, Offer, IssueReport
 from app.db.session import get_db
 from app.services.offer_validation import validate_offer
 from app.services.stock import accept_offer_and_decrement
@@ -78,8 +84,14 @@ def submit_offer(req: OfferRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/offers")
-def list_offers_for_artisan(artisan_id: str, db: Session = Depends(get_db)):
-    listings = db.query(Listing).filter(Listing.artisan_id == artisan_id).all()
+def list_offers_for_artisan(
+    artisan_id: str | None = None,
+    db: Session = Depends(get_db),
+    me: Artisan = Depends(require_artisan),
+):
+    if artisan_id is not None:
+        ensure_owner(me, artisan_id)
+    listings = db.query(Listing).filter(Listing.artisan_id == me.id).all()
     listing_ids = [l.id for l in listings]
     by_listing = {l.id: l for l in listings}
     offers = (
@@ -100,11 +112,18 @@ def list_offers_for_artisan(artisan_id: str, db: Session = Depends(get_db)):
     ]
 
 
-@router.post("/offers/{offer_id}/accept")
-def accept_offer(offer_id: int, db: Session = Depends(get_db)):
+def _own_offer(db: Session, offer_id: int, me: Artisan) -> Offer:
     offer = db.query(Offer).filter(Offer.id == offer_id).first()
-    if offer is None:
+    # Someone else's offer answers exactly like a missing one, so offer ids
+    # can't be probed.
+    if offer is None or offer.listing.artisan_id != me.id:
         raise HTTPException(status_code=404, detail="offer not found")
+    return offer
+
+
+@router.post("/offers/{offer_id}/accept")
+def accept_offer(offer_id: int, db: Session = Depends(get_db), me: Artisan = Depends(require_artisan)):
+    offer = _own_offer(db, offer_id, me)
     if offer.status != "pending":
         raise HTTPException(status_code=409, detail=f"offer is already {offer.status}")
 
@@ -125,10 +144,8 @@ def accept_offer(offer_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/offers/{offer_id}/decline")
-def decline_offer(offer_id: int, db: Session = Depends(get_db)):
-    offer = db.query(Offer).filter(Offer.id == offer_id).first()
-    if offer is None:
-        raise HTTPException(status_code=404, detail="offer not found")
+def decline_offer(offer_id: int, db: Session = Depends(get_db), me: Artisan = Depends(require_artisan)):
+    offer = _own_offer(db, offer_id, me)
     if offer.status != "pending":
         raise HTTPException(status_code=409, detail=f"offer is already {offer.status}")
     offer.status = "declined"

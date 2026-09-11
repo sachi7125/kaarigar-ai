@@ -13,13 +13,18 @@
   .wrap { max-width: 640px; margin: 0 auto; padding: 24px 20px 60px; }
   .url { font-size: 12px; color: #9CA3AF; margin-bottom: 16px; word-break: break-all; }
   .photo {
-    width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 16px;
+    /* contain, not cover: a portrait phone photo was losing its top and
+       bottom in a square frame (same fix as the share card) */
+    width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 16px;
     background: #E5E7EB;
   }
   .photo-placeholder {
     width: 100%; aspect-ratio: 1; border-radius: 16px; background: #E5E7EB;
     display: flex; align-items: center; justify-content: center; color: #9CA3AF; font-size: 14px;
   }
+  .closeup { margin: 12px 0 0; width: 42%; }
+  .closeup img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; display: block; }
+  .closeup figcaption { font-size: 12px; color: #9CA3AF; margin-top: 4px; }
   h1 { font-size: 22px; margin: 20px 0 4px; }
   .title-hi { font-size: 16px; color: #6B7280; margin: 0 0 16px; }
   .badge {
@@ -55,12 +60,18 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="url">kaarigar.in/l/{{ listing.id }}</div>
+    <div class="url">{{ public_host }}/l/{{ listing.id }}</div>
 
-    {% if listing.image_path %}
-      <img class="photo" src="/media/{{ listing.image_path.split('/')[-1] }}" alt="{{ listing.title_en }}">
+    {% if has_photo %}
+      <img class="photo" src="/media/listing/{{ listing.id }}" alt="{{ listing.title_en }}">
     {% else %}
       <div class="photo-placeholder">No photo</div>
+    {% endif %}
+    {% if has_texture %}
+      <figure class="closeup">
+        <img src="/media/listing/{{ listing.id }}/texture" alt="Close-up of the surface">
+        <figcaption>Close-up</figcaption>
+      </figure>
     {% endif %}
 
     <h1>{{ listing.title_en }}</h1>
@@ -72,7 +83,9 @@
 
     <div class="price-row">
       <span class="price">₹{{ "%.0f"|format(listing.price_inr) }}</span>
-      {% if listing.band_low_inr and listing.band_high_inr %}
+      {% if listing.price_unit == "set" %}
+        <span class="band">for the set of {{ listing.pack_size }} (₹{{ "%.0f"|format(listing.price_inr / listing.pack_size) }} each)</span>
+      {% elif listing.band_low_inr and listing.band_high_inr %}
         <span class="band">band ₹{{ "%.0f"|format(listing.band_low_inr) }}–₹{{ "%.0f"|format(listing.band_high_inr) }}</span>
       {% endif %}
     </div>
@@ -97,7 +110,7 @@
           <input id="buyer_contact" required>
           <label for="price_inr">Your offer (₹)</label>
           <input id="price_inr" type="number" min="1" value="{{ '%.0f'|format(listing.price_inr) }}" required>
-          <label for="quantity">Quantity</label>
+          <label for="quantity">{{ "Number of sets" if listing.price_unit == "set" else "Quantity" }}</label>
           <input id="quantity" type="number" min="1" max="{{ listing.remaining_count }}" value="1" required>
           <label for="message">Message (optional)</label>
           <textarea id="message" rows="2"></textarea>

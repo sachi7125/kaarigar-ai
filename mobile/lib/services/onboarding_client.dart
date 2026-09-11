@@ -26,10 +26,13 @@ class OnboardingClient {
     return jsonDecode(res.body)['otp'] as String;
   }
 
-  static Future<bool> verifyOtp({required String phone, required String otp}) async {
+  /// The phone's new sign-in token on success (Day 7), null on a wrong or
+  /// expired code.
+  static Future<String?> verifyOtp({required String phone, required String otp}) async {
     final res = await http.post(Uri.parse('$baseUrl/onboarding/verify_otp'),
         body: {'phone': phone, 'otp': otp});
-    if (res.statusCode != 200) return false;
-    return jsonDecode(res.body)['verified'] == true;
+    if (res.statusCode != 200) return null;
+    final body = jsonDecode(res.body);
+    return body['verified'] == true ? body['auth_token'] as String? : null;
   }
 }

@@ -1,6 +1,11 @@
-# secrets
+# secrets (.env.vercel holds the cloud DATABASE_URL — scripts/deploy_vercel.sh pull-env)
 .env
+.env.*
+!.env.example
 *.key
+
+# the assembled Vercel bundle (scripts/build_vercel.sh) and its project link
+build/
 
 # python
 __pycache__/

@@ -1,0 +1,36 @@
+{
+  "display_name": "Flipkart (incl. Flipkart Samarth)",
+  "format": "xlsx",
+  "sheet_name": "Catalogue",
+  "verified_on": "2026-09-11",
+  "about": [
+    "Flipkart publishes its listing templates only inside Seller Hub, per category. These are the fields sellers' guides document for the bulk catalogue template.",
+    "Download your category's template from Seller Hub and copy these values into it. Header names in your downloaded template win over the ones here.",
+    "Yellow cells are details KaarigarAI doesn't collect: fill them before uploading."
+  ],
+  "sources": [
+    "https://www.ecomva.com/e-commerce-wikis/how-to-upload-bulk-products-on-flipkart/",
+    "https://lyxelandflamingo.com/blogs/third-party-marketplaces/a-complete-guide-to-creating-a-product-listing-on-flipkart/"
+  ],
+  "columns": [
+    {"header": "Seller SKU ID", "value": "{listing_id}"},
+    {"header": "Listing Status", "value": "ACTIVE"},
+    {"header": "MRP", "not_collected": "your MRP in rupees; Flipkart requires the selling price to be below it"},
+    {"header": "Your Selling Price", "value": "{price_inr}"},
+    {"header": "Stock", "value": "{remaining_count}", "note": "check the stock column's exact name in your template"},
+    {"header": "Procurement Type", "not_collected": "how soon you can ship after an order; choose it in Seller Hub"},
+    {"header": "HSN", "not_collected": "the GST HSN code for your product"},
+    {"header": "Tax Code", "not_collected": "GST tax code (Seller Hub guides you to it from the HSN)"},
+    {"header": "Brand", "not_collected": "your brand name"},
+    {"header": "Pack Of", "value": "{pack_of}"},
+    {"header": "Image URL", "value": "{image_url}", "if_empty": "no photo on this listing"},
+    {"header": "EAN/UPC", "not_collected": "barcode, if the product has one"},
+    {"header": "Description", "value": "{description_en}"},
+    {"header": "Search Keywords", "value": "{keywords}"},
+    {"header": "Key Features", "value": "{features}"},
+    {"header": "Package Length (cm)", "not_collected": "measure the packed item"},
+    {"header": "Package Breadth (cm)", "not_collected": "measure the packed item"},
+    {"header": "Package Height (cm)", "not_collected": "measure the packed item"},
+    {"header": "Package Weight (kg)", "not_collected": "weigh the packed item"}
+  ]
+}

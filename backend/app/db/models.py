@@ -19,8 +19,8 @@ import datetime
 import os
 import secrets
 
-from sqlalchemy import Column, String, Float, Integer, Boolean, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, Float, Integer, Boolean, DateTime, ForeignKey, LargeBinary, Text
+from sqlalchemy.orm import deferred, relationship
 
 from app.db.session import Base
 
@@ -52,6 +52,15 @@ class Artisan(Base):
     maker_story_text_hi = Column(Text, nullable=True)
     maker_story_audio_path = Column(String, nullable=True)
 
+    # Day 7, middleman guard (roadmap: "account & QR bound to her own number,
+    # earnings only in her view"): SHA-256 of the one device token her phone
+    # holds (app/auth.py). Issued when she first registers her number and
+    # re-issued, replacing the old one, whenever she verifies by OTP. Offers,
+    # buyer contacts and earnings all need it.
+    auth_token_hash = Column(String, nullable=True)
+    # Opens of her public storefront page (/s/<id>), for the no-offers nudge.
+    storefront_views = Column(Integer, nullable=False, default=0, server_default="0")
+
     listings = relationship("Listing", back_populates="artisan")
     followers = relationship("Follower", back_populates="artisan")
 
@@ -82,11 +91,43 @@ class Listing(Base):
     total_count = Column(Integer, nullable=False, default=1)
     remaining_count = Column(Integer, nullable=False, default=1)
 
+    # Day 7, per-piece vs per-set (roadmap: "ask"): "set" means price_inr buys
+    # all pack_size pieces together as one lot, so total/remaining count lots.
+    price_unit = Column(String, nullable=False, default="piece", server_default="piece")
+    pack_size = Column(Integer, nullable=False, default=1, server_default="1")
+    # Opens of the buyer page (/l/<id>), for the no-offers nudge. Crawlers count too.
+    view_count = Column(Integer, nullable=False, default=0, server_default="0")
+
     status = Column(String, nullable=False, default="published")  # "published" | "sold_out"
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     artisan = relationship("Artisan", back_populates="listings")
     offers = relationship("Offer", back_populates="listing")
+    photo = relationship("ListingPhoto", uselist=False, back_populates="listing")
+
+
+class ListingPhoto(Base):
+    """The listing photo itself, downscaled, stored with the listing (Day 7).
+
+    Buyer pages must work wherever the database is, including the Vercel
+    deployment, which has no disk to serve backend/data/uploads/ from. At
+    ~150 KB a photo this is fine for a prototype; a real launch would move
+    it to object storage and keep only the URL here."""
+    __tablename__ = "listing_photos"
+
+    listing_id = Column(String, ForeignKey("listings.id"), primary_key=True)
+    content_type = Column(String, nullable=False, default="image/jpeg")
+    data = deferred(Column(LargeBinary, nullable=False))
+    # "enhanced": the Day-1 pipeline's cut-out on white, square-cropped, colour
+    # corrected (what scripts/try_photo.py shows). "original": the photo as
+    # taken, kept when the cut-out failed its own sanity check — a plain photo
+    # beats a broken cut-out.
+    kind = Column(String, nullable=False, default="original", server_default="original")
+    # The same pipeline's zoomed surface close-up; null for "original".
+    texture_data = deferred(Column(LargeBinary, nullable=True))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    listing = relationship("Listing", back_populates="photo")
 
 
 class Offer(Base):

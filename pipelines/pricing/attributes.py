@@ -57,6 +57,7 @@ import numpy as np
 
 from pipelines.common import cfg_get
 from pipelines.image.enhance import subject_mask, cutout_metrics
+from pipelines.pricing.material_terms import MATERIAL_TERMS
 from pipelines.voice import tts
 from pipelines.voice.readback import classify_answer
 from pipelines.voice.transcribe import transcribe
@@ -64,27 +65,6 @@ from pipelines.voice.transcribe import transcribe
 Recorder = Callable[[str, int], Optional[str]]
 
 _OUT_DIR = Path("results/attributes")
-
-# canonical (glossary-corrected) term -> data/reference/material_rates.csv key.
-# Deliberately independent of craft_glossary.csv's file structure (that file mixes
-# techniques/objects/materials under comments, not a machine-readable type column) —
-# this is the pricing side's own small, explicit vocabulary.
-MATERIAL_TERMS: dict[str, str] = {
-    "clay": "clay", "terracotta clay": "terracotta", "terracotta": "terracotta",
-    "brass": "brass", "copper": "copper", "silver": "silver",
-    "cotton": "cotton", "silk": "silk", "wool": "wool", "jute": "jute",
-    "bamboo": "bamboo", "sandalwood": "sandalwood", "wood": "wood",
-    "leather": "leather",
-    "मिट्टी": "clay", "पीतल": "brass", "तांबा": "copper", "चांदी": "silver",
-    "सूती": "cotton", "रेशम": "silk", "बांस": "bamboo", "लकड़ी": "wood",
-    # "चमड़ा"/"चमड़े" (the plain Hindi word, inflected form "of leather") and
-    # "लेदर" (the common English-loanword transliteration) — found missing
-    # live 7 Sep: a real leather-sandal voice note said "लेदर" clearly, but
-    # nothing in this dict recognised it, so material silently came back
-    # empty. Leather goods (chappals, bags, belts) are a major Indian craft
-    # category this vocabulary had no entry for at all.
-    "चमड़ा": "leather", "चमड़े": "leather", "लेदर": "leather",
-}
 
 # Spelled out (not \w) for the same reason as glossary.py: \w excludes Devanagari
 # matras/virama (they are Mn marks), which would shred a word like "मिट्टी".
