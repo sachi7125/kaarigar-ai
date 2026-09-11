@@ -3,7 +3,9 @@
 A rough phone photo -> a clean e-commerce image:
   1. background removal        (U2-Net u2netp via onnxruntime; GrabCut fallback)
   2. failure-aware check       (bad cut-out -> keep original, ask for a retake)
-  3. composite onto white      (the product's colour left exactly as photographed)
+  3. composite onto white      (the product's colour left exactly as photographed,
+                                the soft mask edge tightened and recoloured so no
+                                grey rim of the old background survives the cut)
   4. saliency crop             (subject bounding box -> white square)
   5. texture close-up          (the product's most detailed square, by ORB keypoints)
 
@@ -207,10 +209,72 @@ def _clahe_lighting(bgr: np.ndarray) -> np.ndarray:
 
 
 # ------------------------------------------------------------------- composite/crop
-def _composite_white(bgr: np.ndarray, alpha: np.ndarray) -> np.ndarray:
-    a = (alpha.astype(np.float32) / 255.0)[:, :, None]
-    white = np.full_like(bgr, 255)
-    return (bgr * a + white * (1 - a)).astype(np.uint8)
+# u2netp decides the mask at 320x320 and it is then stretched back to the photo's
+# own size, so the product's edge arrives as a wide, soft ramp rather than a
+# boundary: measured 5 px on clay-pot.jpg and 8 px on saree.jpeg, and
+# _crop_to_square upscales that again on its way to 1000 px. Compositing such a
+# ramp straight onto white does two visible things — it fades several pixels of
+# real product out towards white, and it keeps the background's own colour in
+# every part-transparent pixel. Together that is the faint grey rim around the
+# cut-out, and on a small listing thumbnail a rim that wide reads as the whole
+# product being paler than the photo.
+#
+# Two steps fix it, neither of which touches a fully-opaque product pixel:
+EDGE_ALPHA_LO, EDGE_ALPHA_HI = 0.35, 0.65   # ramp outside this stays fully out/in,
+                                            # leaving ~1 px of anti-aliasing
+EDGE_CORE_ALPHA = 0.9        # "definitely product" pixels, the only colour source
+EDGE_FILL_RADIUS = 9         # how far a core colour is carried outwards, per round
+EDGE_FILL_ROUNDS = 3
+
+
+def _refine_alpha(alpha: np.ndarray) -> np.ndarray:
+    """The mask's soft ramp, steepened to a real edge. Returns float 0..1.
+
+    Everything below EDGE_ALPHA_LO is background, everything above EDGE_ALPHA_HI
+    is product, and the short span between keeps the anti-aliasing that stops the
+    outline looking cut with scissors."""
+    a = alpha.astype(np.float32) / 255.0
+    return np.clip((a - EDGE_ALPHA_LO) / (EDGE_ALPHA_HI - EDGE_ALPHA_LO), 0.0, 1.0)
+
+
+def _foreground_colour(bgr: np.ndarray, a: np.ndarray) -> np.ndarray:
+    """The product's own colour for the part-transparent edge pixels.
+
+    A pixel the mask only half keeps is already a mix of product and whatever was
+    behind it, so blending it towards white preserves that background — a dark
+    table leaves a grey rim, a bright one a washed-out rim. Instead the colour is
+    carried outwards from the fully-opaque pixels (a normalised blur: the blurred
+    product colour divided by the blurred coverage, which averages only over
+    pixels that are genuinely product), so the edge fades out in the product's
+    colour and nothing of the background survives the cut.
+    """
+    known = (a >= EDGE_CORE_ALPHA).astype(np.float32)
+    fg = bgr.astype(np.float32) * known[:, :, None]
+    weight = known.copy()
+    ksize = (EDGE_FILL_RADIUS, EDGE_FILL_RADIUS)
+    for _ in range(EDGE_FILL_ROUNDS):
+        reachable = cv2.blur(weight, ksize)
+        filled = reachable > 1e-3
+        if not filled.any():
+            break
+        estimate = cv2.blur(fg, ksize) / np.maximum(reachable, 1e-3)[:, :, None]
+        take = filled & (weight < 1.0)
+        fg = np.where(take[:, :, None], estimate, fg)
+        weight = np.where(take, 1.0, weight)
+    return fg
+
+
+def _composite_white(bgr: np.ndarray, alpha: np.ndarray, clean_edge: bool = True) -> np.ndarray:
+    """Put the cut-out on white. With `clean_edge` (config `image.edge_cleanup`)
+    the boundary is tightened and recoloured first — see the note above."""
+    if clean_edge:
+        a = _refine_alpha(alpha)
+        fg = _foreground_colour(bgr, a)
+    else:
+        a = alpha.astype(np.float32) / 255.0
+        fg = bgr.astype(np.float32)
+    a = a[:, :, None]
+    return np.clip(fg * a + 255.0 * (1.0 - a), 0, 255).astype(np.uint8)
 
 
 def _bbox(alpha: np.ndarray):
@@ -221,7 +285,18 @@ def _bbox(alpha: np.ndarray):
 
 
 def _crop_to_square(img: np.ndarray, box, pad_frac: float = 0.10) -> np.ndarray:
-    """Crop to the subject box, padded, then letterbox to a white square."""
+    """Crop to the subject box, padded, then letterbox to a white square.
+
+    Only ever scaled DOWN, for the same reason the close-up is (see
+    `_texture_closeup`): a product that fills a third of the frame leaves a crop
+    far smaller than TARGET_SIZE, and blowing that up invents no detail. It used
+    to resize to TARGET_SIZE unconditionally with INTER_AREA, which is a
+    downscaling filter — asked to enlarge, it steps like nearest-neighbour.
+    Measured on clay-pot.jpg (a 356 px crop enlarged 2.81x): hard pixel steps up
+    to 105 levels away from a proper Lanczos enlargement, which is what put
+    staircase edges on the pot's gradient and the saree's motifs. Keeping the
+    crop's own pixels is both sharper and honest about the resolution behind it.
+    """
     h, w = img.shape[:2]
     if box is None:
         box = (0, 0, w - 1, h - 1)
@@ -236,6 +311,8 @@ def _crop_to_square(img: np.ndarray, box, pad_frac: float = 0.10) -> np.ndarray:
     canvas = np.full((side, side, 3), 255, np.uint8)
     oy, ox = (side - ch) // 2, (side - cw) // 2
     canvas[oy:oy + ch, ox:ox + cw] = crop
+    if side <= TARGET_SIZE:
+        return canvas
     return cv2.resize(canvas, (TARGET_SIZE, TARGET_SIZE), interpolation=cv2.INTER_AREA)
 
 
@@ -355,7 +432,7 @@ def enhance(input_path: str, out_dir: str) -> EnhanceResult:
     # ×1.25, terracotta turned brown (a* +41 → +20). CLAHE then lifted a sari's
     # lightness 90 → 105 and dulled it. The buyer is buying that colour.
     img = _clahe_lighting(_white_balance(bgr)) if cfg_get("image.color_correction", False) else bgr
-    composited = _composite_white(img, alpha)
+    composited = _composite_white(img, alpha, cfg_get("image.edge_cleanup", True))
 
     enhanced = _crop_to_square(composited, box)
     texture = _texture_closeup(img, composited, alpha, box)

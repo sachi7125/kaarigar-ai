@@ -47,8 +47,32 @@ Status: `[ ]` open · `[x]` checked, fine · `[!]` checked, it was a problem.
       (coverage in 0.02–0.98 AND largest connected blob ≥ 0.55 of subject pixels), NOT internal
       subject contrast — a flat-coloured pot/sari is legitimately low-contrast and must NOT be
       rejected. `[!]`-watch on real photos: confirm a genuine pale-on-pale case still trips it.
-- [ ] **White balance is scene-based (Shades-of-Gray, gains clamped 0.6–1.6).** Verify on real
-      warm-lit photos that it corrects the cast without over-blueing; the clamp is the safety net.
+- [!] **White balance is scene-based (Shades-of-Gray, gains clamped 0.6–1.6).** Verified on real
+      warm-lit photos 11 Sep and it was wrong: on `clay-pot.jpg` the warm *scene* was read as a
+      cast and terracotta went brown. Colour correction is off by default now (D8); the clamp
+      was not enough of a safety net because the estimate itself was the problem.
+- [x] **The cut-out's edge carried the old background** — found 11 Sep while chasing "the colour
+      doesn't look the same". The interior was already bit-identical to the photo (ΔBGR ≤ 1); the
+      5–8 px soft rim was the whole visible difference. Fixed via `image.edge_cleanup` (D23).
+      **If a mask ever looks chewed or an outline too hard, this is the first knob to turn off**
+      (`edge_cleanup: false`) — it is deliberately a config switch, not a hardcode.
+- [x] **`enhanced.png` is square but no longer always 1000 px** (D24) — it scales down only, so
+      a small or zoomed-out photo yields a genuinely smaller image. Every current consumer
+      resizes whatever it gets (share card, `services/photos.py`, the listing page's
+      `object-fit`) and all three were checked 11 Sep. **Anything new that assumes a 1000 px
+      enhanced image will be wrong** — resize, don't assume.
+- [ ] **Phone photos may carry an ICC colour profile.** `cv2.imread` ignores it and `cv2.imwrite`
+      writes none, so a Display-P3 capture would be *displayed* through its profile while the
+      enhanced output renders as sRGB — identical numbers, different colour on screen. The two
+      demo photos have no profile, so this is unproven and untested; check a real Pixel 8 file
+      (`Image.open(p).info.get("icc_profile")`) before blaming the pipeline for a colour shift.
+- [!] **A listing's photos are frozen in the database at publish time.** Neither the 11 Sep
+      colour fix nor the edge fix reaches an existing listing: `services/photos.py` runs the
+      pipeline once, at publish. After any pipeline change, run
+      `scripts/backfill_listing_photos.py --redo` against the database the server actually uses,
+      and remember it can only redo listings whose original upload is still on that machine —
+      anything published from a device whose upload has since been cleared keeps its old photo
+      permanently. **Check this before the demo**, or the demo listings will show pre-fix photos.
 - [ ] **rembg model is a ~176 MB download** (`~/.rembg/u2net.onnx`) on first use. For the demo/
       device path, pre-fetch it (ties into the Day-7 pre-cache + on-device model plan).
 

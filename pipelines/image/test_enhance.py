@@ -9,7 +9,9 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from pipelines.image.enhance import TARGET_SIZE, _closeup_window, enhance, cutout_reason
+from pipelines.image.enhance import (
+    TARGET_SIZE, _closeup_window, _composite_white, _refine_alpha, enhance, cutout_reason,
+)
 
 
 # --------------------------------------------------------- pure decision (fast)
@@ -71,6 +73,60 @@ def test_product_colour_is_left_as_photographed(tmp_path):
     assert np.abs(centre.reshape(-1, 3).mean(0) - np.array([53, 99, 209])).max() <= 4
 
 
+# --------------------------------------------------------- cut-out edge (Day 7)
+def _soft_edged_product():
+    """A red product on a dark background with a deliberately soft mask — the
+    same shape u2netp produces, since it decides the mask at 320x320 and the
+    result is stretched back up to the photo's size."""
+    bgr = np.full((400, 400, 3), (40, 40, 40), np.uint8)     # dark surroundings
+    cv2.circle(bgr, (200, 200), 120, (40, 40, 200), -1)      # red product
+    alpha = np.zeros((400, 400), np.uint8)
+    cv2.circle(alpha, (200, 200), 120, 255, -1)
+    return bgr, cv2.blur(alpha, (25, 25))                    # ...with a wide soft ramp
+
+
+def _rim_contamination(bgr, alpha, product_bgr, clean_edge):
+    """How far the rim strays from a clean fade of the product's own colour to
+    white — i.e. how much of the old background is still showing in it.
+
+    Each version is judged against a fade at *its own* alpha, so this measures
+    only the rim's colour; its width is a separate test below.
+    """
+    out = _composite_white(bgr, alpha, clean_edge=clean_edge).astype(np.float32)
+    a = _refine_alpha(alpha) if clean_edge else alpha.astype(np.float32) / 255.0
+    band = (a > 0.02) & (a < 0.98)
+    av = a[band][:, None]
+    ideal = np.array(product_bgr, np.float32)[None, :] * av + 255.0 * (1.0 - av)
+    return float(np.abs(out[band] - ideal).mean())
+
+
+def test_edge_cleanup_removes_the_grey_rim():
+    """The old background must not survive in the part-transparent pixels: a red
+    product cut off a dark backdrop used to fade out through grey."""
+    bgr, alpha = _soft_edged_product()
+    product = (40, 40, 200)
+    before = _rim_contamination(bgr, alpha, product, clean_edge=False)
+    after = _rim_contamination(bgr, alpha, product, clean_edge=True)
+    assert after < before / 2        # the rim keeps the product's colour, not the backdrop's
+
+
+def test_edge_cleanup_narrows_the_soft_band():
+    bgr, alpha = _soft_edged_product()
+    a = _refine_alpha(alpha)
+    wide = ((alpha > 5) & (alpha < 250)).sum()
+    narrow = ((a > 0.02) & (a < 0.98)).sum()
+    assert narrow < wide / 3
+    assert narrow > 0                # still anti-aliased, not cut with scissors
+
+
+def test_edge_cleanup_never_touches_the_product_itself():
+    """The colour promise (D8) is unchanged: a fully-opaque pixel is the photo's."""
+    bgr, alpha = _soft_edged_product()
+    out = _composite_white(bgr, alpha, clean_edge=True)
+    opaque = alpha == 255
+    assert np.abs(out.astype(int) - bgr.astype(int))[opaque].max() == 0
+
+
 # --------------------------------------------------------- close-up (Day 7)
 def _product_with_detail_patch():
     """A plain orange product filling most of a 1600×1200 frame, with one
@@ -98,6 +154,26 @@ def test_a_plain_product_falls_back_to_its_middle():
     cv2.rectangle(bgr, (200, 150), (1400, 1050), (53, 99, 209), -1)  # paint the patch over
     x, y, side = _closeup_window(bgr, alpha, box)
     assert x <= 800 <= x + side and y <= 600 <= y + side
+
+
+def test_the_main_image_is_never_blown_up_either(tmp_path):
+    """A small crop stays at its own resolution: INTER_AREA asked to enlarge
+    steps like nearest-neighbour, which put staircase edges on real photos."""
+    img = np.full((600, 800, 3), 210, np.uint8)
+    cv2.rectangle(img, (300, 200), (520, 430), (140, 110, 40), -1)   # small product
+    src = tmp_path / "small_product.png"
+    cv2.imwrite(str(src), img)
+    out = cv2.imread(enhance(str(src), str(tmp_path / "out")).outputs["enhanced"])
+    assert out.shape[0] == out.shape[1] < TARGET_SIZE     # square, and its own pixels
+
+
+def test_a_big_photo_is_still_capped(tmp_path):
+    img = np.full((2400, 2400, 3), 210, np.uint8)
+    cv2.rectangle(img, (200, 200), (2200, 2200), (140, 110, 40), -1)
+    src = tmp_path / "big.png"
+    cv2.imwrite(str(src), img)
+    out = cv2.imread(enhance(str(src), str(tmp_path / "out")).outputs["enhanced"])
+    assert out.shape[0] == out.shape[1] == TARGET_SIZE
 
 
 def test_closeup_is_never_blown_up(tmp_path):

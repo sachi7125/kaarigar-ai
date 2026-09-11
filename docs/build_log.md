@@ -15,6 +15,77 @@ Format:
 
 ---
 
+## 2026-09-11 — Why the enhanced photo "doesn't look the same": the edge, then the upscale   [Day 7]
+**Done:** `pipelines/image/enhance.py` — the composite onto white no longer carries the old
+background into the product's edge (D23, config `image.edge_cleanup`, on by default), and the
+crop is no longer enlarged with a downscaling filter (D24). **Neither is a colour-grading
+change: the grading was already correct** — see the measurement below.
+
+**What was actually wrong.** Measured first, on the two real demo photos, before changing
+anything. With `color_correction: false` (D8) the product's interior is already *bit-identical*
+to the photo — max per-pixel BGR difference inside the fully-opaque mask is **1 level on both
+photos, i.e. rounding**. So the colour grading itself was not shifting anything. The edge was:
+
+| | rim width | rim saturation | product's own saturation |
+|---|---|---|---|
+| `clay-pot.jpg` | 5.0 px | 54 | 193 |
+| `saree.jpeg`   | 8.2 px | 46 | 174 |
+
+u2netp decides the mask at 320×320 and it is stretched back to the photo's size, so the edge
+arrives as a wide ramp rather than a boundary — and `_crop_to_square` then upscales that ramp
+again on the way to 1000 px. Two things follow. A part-transparent pixel is already a mix of
+product and whatever was behind it, so blending it towards white preserves the background (a
+dark table leaves grey, a bright one leaves a washed-out halo). And several pixels of real
+product get faded out. On a small listing thumbnail an 8 px desaturated rim reads as *the whole
+product* being paler than the photo — which is why this looked like a colour-grading problem.
+
+**The fix, two steps, neither touching an opaque pixel:**
+- `_refine_alpha()` contrast-stretches the ramp (0.35–0.65 → 0–1), leaving ~1 px of
+  anti-aliasing so the outline isn't cut with scissors.
+- `_foreground_colour()` carries the colour outwards from the fully-opaque pixels by normalised
+  blur (blurred product colour ÷ blurred coverage, so the average only ever includes genuine
+  product), and the edge fades out in *that* colour.
+
+Result: rim **5.0 → 0.8 px** and **8.2 → 1.1 px**, rim saturation moves back toward the
+product's, and the core's ΔBGR against the photo is **0** — stricter than before, since the old
+path's rounding cost 1 level.
+
+**Then a second cause, found while confirming the first (D24).** `_crop_to_square` resized to
+1000 px unconditionally with `INTER_AREA` — a *downscaling* filter, which OpenCV steps like
+nearest-neighbour when asked to enlarge. The pot's crop is 356 px, so it was being blown up
+2.81×, landing up to **105 levels per pixel** away from a proper Lanczos enlargement (variance
+of Laplacian 45.2 vs 9.6 — staircase artefacts, not detail). That is what put hard steps on the
+pot's gradient and the saree's motifs. It now scales down only and otherwise keeps the crop's
+own pixels, exactly as the texture close-up already did since 11 Sep. **`enhanced.png` is
+therefore square but no longer always 1000 px** (356 px and 501 px for the two demo photos) —
+every consumer already resizes whatever it gets (share card, `services/photos.py`'s JPEG, the
+listing page's `object-fit`), and verified so. A real capture is 1600 px after the app's upload
+downscale, so it usually still hits the downscale path; this mostly changes small or
+zoomed-out photos. The trade accepted: a genuinely small crop now yields a genuinely small
+image, enlarged smoothly by the browser instead of shipping baked-in nearest-neighbour steps.
+
+**How to run / verify:** `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=. .venv/bin/python -m
+pytest pipelines/image/ -q` → 14 passing (5 new: the rim keeps the product's colour, the band
+narrows by >3×, an opaque pixel is never touched, the main image is never blown up, and a big
+photo is still capped). Visually, `python -m scripts.try_photo clay-pot.jpg`. Set
+`image.edge_cleanup: false` in config.yaml to get the old edge behaviour back for comparison.
+
+**Notes / gotchas:**
+- **Listing photos are baked into the database at publish time** (`services/photos.py`), so
+  neither this nor the 11 Sep colour fix reaches a listing that already exists. Run
+  `.venv/bin/python scripts/backfill_listing_photos.py --redo` against whichever database the
+  server is pointed at — and note it can only redo listings whose original upload is still on
+  that machine. **If the app still shows brown terracotta, this is why**: those rows were
+  written by the pre-11-Sep pipeline with white balance + CLAHE baked in.
+- `_composite_white` has no callers outside this module, so the new `clean_edge` argument
+  changes nothing else; `subject_mask` / `cutout_metrics` (used by `pricing/attributes.py`) are
+  untouched.
+- The close-up crops from the composited image, so it picks up the cleaner edge too.
+
+**Commit:** pending
+
+---
+
 ## 2026-09-07 — Day 6: storefront, follow, stall QR, share card, export bundle, maker story   [Day 6]
 **Done:** all of Day 6's mandated (★) items, plus two user-raised additions and two real bugs
 found by testing on the physical phone. The optional (○) tier — scheme/mela alerts, quality

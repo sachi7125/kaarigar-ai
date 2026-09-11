@@ -29,6 +29,9 @@ image:
   min_subject_component_frac: 0.55  # smaller largest-blob -> fragmented cut-out -> retake
   texture_closeup: true
   color_correction: false        # white balance + CLAHE; off since 11 Sep — they shifted the product's own colour (D8)
+  edge_cleanup: true             # tighten the mask's soft ramp to a real edge and take the
+                                 # edge colour from the product, not from what was behind it —
+                                 # otherwise the cut-out keeps a 5-8px grey rim (D23)
   # extras (build if time): blur_shake_capture, synthetic_shadow, perspective_deskew, angle_coach
 
 pricing:

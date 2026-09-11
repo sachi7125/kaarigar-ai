@@ -238,6 +238,15 @@ the wireframe's own stated intent. (Day 6 itself started the next morning, 7 Sep
       Leather goods are a major Indian craft category; see build_log 7 Sep.
 
 ## Day 7 — Hardening + offline rehearsal + pre-cache   · GATE
+- [x] Enhanced photo fidelity (11 Sep) — chased "the colour doesn't look the same" and measured
+      it to two causes, neither of them the grading (the product's interior was already
+      bit-identical to the photo). (1) The mask's 5–8 px soft ramp carried the old background
+      into the product's edge, reading as the whole product being paler; rim now 0.8/1.1 px in
+      the product's own colour (`image.edge_cleanup`, D23). (2) `_crop_to_square` enlarged the
+      crop with `INTER_AREA`, a downscaling filter that steps like nearest-neighbour — up to
+      105 levels/pixel of staircase artefacts; it now only ever scales down (D24). 5 new tests,
+      14 in `pipelines/image/`. **Existing listings need
+      `scripts/backfill_listing_photos.py --redo`** — photos are baked in at publish.
 - [ ] Edge-case register hardened
 - [ ] Offline rehearsal (network disabled) · pre-cache demo responses
 - [ ] GATE: full seven-beat demo runs twice with no internet
